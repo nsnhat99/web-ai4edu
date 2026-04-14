@@ -1,0 +1,29 @@
+{
+  "name": "ai4edu-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website Hội thảo Quốc gia AI4EDU 2026 - Trường Đại học Thủ đô Hà Nội",
+  "scripts": {
+    "start": "echo 'This project is intended for Vercel deployment.'",
+    "build": "mkdir -p dist && esbuild index.tsx --bundle --outfile=dist/bundle.js --jsx=automatic --platform=browser --target=es2020 --define:process.env.NODE_ENV='\"production\"' && cp index.html dist/index.html && sed -i 's|<script type=\"module\" src=\"/index.tsx\"></script>|<script src=\"/bundle.js\"></script>|' dist/index.html && sed -i '/<script type=\"importmap\">/,/<\\/script>/d' dist/index.html",
+    "seed": "node api/seed.js",
+    "postinstall": "node api/seed.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0",
+    "@vercel/postgres": "^0.8.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.23.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "esbuild": "^0.20.2",
+    "typescript": "^5.0.0",
+    "dotenv": "^16.4.5"
+  }
+}
