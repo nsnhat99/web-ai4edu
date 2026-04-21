@@ -1,10 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import type { DetailedPaperSubmission, ReviewStatus, PresentationStatus, PaperSubmissionFormData } from '../types';
+import type { DetailedPaperSubmission, ReviewStatus, PresentationStatus } from '../types';
 import * as api from '../api';
+
+export type AddPaperInput = Omit<DetailedPaperSubmission, 'id' | 'fullTextFileName' | 'fullTextUrl'>;
 
 interface PaperContextType {
   papers: DetailedPaperSubmission[];
-  addPaper: (formData: PaperSubmissionFormData) => Promise<DetailedPaperSubmission>;
+  addPaper: (data: AddPaperInput) => Promise<DetailedPaperSubmission>;
   deletePaper: (id: number) => Promise<void>;
   updatePaperDetails: (id: number, data: Partial<DetailedPaperSubmission>) => Promise<void>;
   updateAbstractStatus: (id: number, status: ReviewStatus) => Promise<void>;
@@ -24,8 +26,8 @@ export const PaperProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     api.getPapers().then(setPapers).catch(err => console.error("Failed to fetch papers:", err));
   }, []);
 
-  const addPaper = async (formData: PaperSubmissionFormData): Promise<DetailedPaperSubmission> => {
-    const newPaper = await api.addPaper(formData);
+  const addPaper = async (data: AddPaperInput): Promise<DetailedPaperSubmission> => {
+    const newPaper = await api.addPaper(data);
     setPapers(prevPapers => [newPaper, ...prevPapers]);
     return newPaper;
   };

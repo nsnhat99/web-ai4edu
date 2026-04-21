@@ -2,6 +2,7 @@ export type NavLink = {
   id: number;
   name: string;
   path?: string;
+  external?: boolean;
   children?: NavLink[];
 };
 
@@ -82,7 +83,6 @@ export type ContactInfo = {
 export type ReportItem = {
   stt: number;
   topic: string;
-  requirement: string;
 };
 
 export type SpecializedSession = {

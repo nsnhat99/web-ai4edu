@@ -19,23 +19,23 @@ const LoginPage: React.FC = () => {
       await login(username, password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
+      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');
     }
   };
   
   const inputStyles = "mt-1 block w-full px-3 py-2 bg-slate-800/50 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500";
 
   return (
-    <div className="flex justify-center items-center py-10">
+    <div className="flex justify-center items-center pt-28 pb-10 px-4">
       <div className="bg-slate-800/50 backdrop-blur-md rounded-lg shadow-xl w-full max-w-md p-8 border border-slate-700/50">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-slate-100">Administrator Login</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-slate-100">Đăng nhập Quản trị viên</h2>
         <div className="text-sm bg-blue-900/50 border border-sky-700/50 text-blue-200 p-3 rounded-md mb-6">
-            <p>This login is for administrators only.</p>
-            <p><strong>Hint:</strong> username: admin / password: password</p>
+            <p>Trang đăng nhập này chỉ dành cho quản trị viên.</p>
+            <p><strong>Gợi ý:</strong> tên đăng nhập: admin / mật khẩu: password</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-slate-100">Username</label>
+            <label htmlFor="username" className="block text-sm font-medium text-slate-100">Tên đăng nhập</label>
             <input
               type="text"
               id="username"
@@ -46,7 +46,7 @@ const LoginPage: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="password"  className="block text-sm font-medium text-slate-100">Password</label>
+            <label htmlFor="password"  className="block text-sm font-medium text-slate-100">Mật khẩu</label>
             <input
               type="password"
               id="password"
@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-600"
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </div>
         </form>

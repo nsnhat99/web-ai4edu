@@ -18,7 +18,6 @@ const ReportTable: React.FC<{ reports: ReportItem[] }> = ({ reports }) => {
           <tr className="border-b border-blue-500/15">
             <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px] w-16">STT</th>
             <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px]">Chủ đề báo cáo</th>
-            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px] hidden md:table-cell">Yêu cầu báo cáo viên</th>
           </tr>
         </thead>
         <tbody>
@@ -36,15 +35,6 @@ const ReportTable: React.FC<{ reports: ReportItem[] }> = ({ reports }) => {
                 <p className="text-blue-50 text-[15px] font-medium leading-relaxed">
                   {r.topic}
                 </p>
-                {/* Show requirement below on mobile */}
-                <p className="text-slate-400 text-sm mt-2 leading-relaxed md:hidden">
-                  <i className="fas fa-user-tie text-blue-400/40 mr-2"></i>
-                  {r.requirement}
-                </p>
-              </td>
-              <td className="px-4 py-5 align-top text-slate-400 text-sm leading-relaxed hidden md:table-cell">
-                <i className="fas fa-user-tie text-blue-400/30 mr-2"></i>
-                {r.requirement}
               </td>
             </tr>
           ))}

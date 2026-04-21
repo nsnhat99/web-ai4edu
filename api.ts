@@ -1,4 +1,4 @@
-import type { Announcement, ContactInfo } from './types';
+import type { Announcement, ContactInfo, ReviewStatus, PresentationStatus } from './types';
 
 const API_BASE_URL = '/api';
 
@@ -103,15 +103,19 @@ export const getPaper = (id: number) => {
   return fetchAPI(`/papers/${id}`);
 };
 
-export const addPaper = (formData: {
+export const addPaper = (data: {
   authorName: string;
   organization: string;
   paperTitle: string;
-  topic: string;
+  topic: string | number;
+  abstractStatus?: ReviewStatus;
+  fullTextStatus?: ReviewStatus;
+  reviewStatus?: ReviewStatus;
+  presentationStatus?: PresentationStatus;
 }) => {
   return fetchAPI('/papers', {
     method: 'POST',
-    body: JSON.stringify(formData),
+    body: JSON.stringify(data),
   });
 };
 
@@ -139,6 +143,97 @@ export const deleteFullTextFile = (paperId: number) => {
     method: 'DELETE',
   });
 };
+
+// --- PUBLIC SUBMISSIONS (Google Sheets + Drive) ---
+
+const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB — must be a multiple of 256 KiB for Drive
+
+type UploadProgressCb = (percent: number) => void;
+
+// Upload a file directly to Google Drive using a resumable session URL obtained from our API.
+// Returns the Drive fileId so the server can attach it to a sheet row.
+export const uploadToDrive = async (
+  file: File,
+  onProgress?: UploadProgressCb
+): Promise<{ fileId: string; fileName: string }> => {
+  const init = await fetchAPI('/drive/init-upload', {
+    method: 'POST',
+    body: JSON.stringify({ fileName: file.name, mimeType: file.type || 'application/octet-stream' }),
+  });
+  const sessionUrl: string = init.sessionUrl;
+
+  const total = file.size;
+  let offset = 0;
+  let fileId: string | null = null;
+
+  while (offset < total) {
+    const end = Math.min(offset + CHUNK_SIZE, total);
+    const chunk = file.slice(offset, end);
+    const res = await fetch(sessionUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Range': `bytes ${offset}-${end - 1}/${total}`,
+      },
+      body: chunk,
+    });
+    if (res.status === 200 || res.status === 201) {
+      const data = await res.json();
+      fileId = data.id;
+      offset = total;
+    } else if (res.status === 308) {
+      const range = res.headers.get('range'); // "bytes=0-N"
+      if (range) {
+        const m = range.match(/bytes=\d+-(\d+)/);
+        if (m) offset = parseInt(m[1], 10) + 1;
+        else offset = end;
+      } else {
+        offset = end;
+      }
+      if (onProgress) onProgress(Math.round((offset / total) * 100));
+    } else {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Drive upload failed (${res.status}): ${text}`);
+    }
+  }
+
+  if (!fileId) throw new Error('Drive upload finished but fileId is missing');
+  if (onProgress) onProgress(100);
+  return { fileId, fileName: file.name };
+};
+
+export const submitPublicPaper = (data: {
+  authorName: string;
+  organization: string;
+  email: string;
+  phone: string;
+  paperTitle: string;
+  topic: string;
+  fileId: string;
+  fileName: string;
+}) => fetchAPI('/public/papers', { method: 'POST', body: JSON.stringify(data) });
+
+export const submitPublicRegistration = (data: {
+  tab: 'abstract' | 'full' | 'attend';
+  name: string;
+  organization: string;
+  email: string;
+  phone: string;
+  paperTitle?: string;
+  topic?: string;
+  delegateType?: string;
+  activities?: string[];
+  bankAccount?: string;
+  taxCode?: string;
+  fileId?: string;
+  fileName?: string;
+}) => fetchAPI('/public/registrations', { method: 'POST', body: JSON.stringify(data) });
+
+export const submitPublicContact = (data: {
+  name: string;
+  email: string;
+  subject?: string;
+  message: string;
+}) => fetchAPI('/public/contacts', { method: 'POST', body: JSON.stringify(data) });
 
 // --- SITE CONTENT ---
 export const getSiteContent = () => {

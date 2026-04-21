@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -12,7 +12,6 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import PaperReviewPage from './pages/PaperReviewPage';
-import SubmitPaperPage from './pages/SubmitPaperPage';
 import ParticipationGuidePage from './pages/ParticipationGuidePage';
 import DatabaseViewPage from './pages/DatabaseViewPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -45,7 +44,7 @@ const App: React.FC = () => {
                       <Route path="/contact" element={<ContactPage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/participation-guide" element={<ParticipationGuidePage />} />
-                      <Route path="/submit-paper" element={<SubmitPaperPage />} />
+                      <Route path="/submit-paper" element={<Navigate to="/submit-full" replace />} />
                       <Route path="/paper-review" element={<PaperReviewPage />} />
                       <Route
                         path="/admin"

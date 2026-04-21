@@ -34,20 +34,34 @@ const Header: React.FC = () => {
           {isOpen && (
             <div className={`${isMobile ? 'relative mt-1 ml-4' : 'absolute top-full left-0 mt-2'} min-w-[220px] bg-[#0a1628]/95 backdrop-blur-xl border border-blue-500/20 rounded-xl shadow-2xl shadow-blue-900/30 overflow-hidden z-50`}>
               {link.children.map((child) => (
-                <RouterNavLink
-                  key={child.id}
-                  to={child.path || '#'}
-                  onClick={closeAll}
-                  className={({ isActive }) =>
-                    `block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 ${
-                      isActive
-                        ? 'text-blue-300 bg-blue-500/15 font-medium'
-                        : 'text-blue-100/70 hover:text-white hover:bg-blue-500/10'
-                    }`
-                  }
-                >
-                  {child.name}
-                </RouterNavLink>
+                child.external ? (
+                  <a
+                    key={child.id}
+                    href={child.path || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeAll}
+                    className="block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 text-blue-100/70 hover:text-white hover:bg-blue-500/10"
+                  >
+                    {child.name}
+                    <i className="fas fa-external-link-alt text-[10px] ml-2 opacity-60"></i>
+                  </a>
+                ) : (
+                  <RouterNavLink
+                    key={child.id}
+                    to={child.path || '#'}
+                    onClick={closeAll}
+                    className={({ isActive }) =>
+                      `block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 ${
+                        isActive
+                          ? 'text-blue-300 bg-blue-500/15 font-medium'
+                          : 'text-blue-100/70 hover:text-white hover:bg-blue-500/10'
+                      }`
+                    }
+                  >
+                    {child.name}
+                  </RouterNavLink>
+                )
               ))}
             </div>
           )}

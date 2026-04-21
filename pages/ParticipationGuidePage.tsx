@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { SUBMISSION_FORM_URL } from '../constants';
+import { ABSTRACT_FORM_URL, FULL_PAPER_FORM_URL } from '../constants';
 import type { Sponsor } from '../types';
 import { useSiteContent } from '../contexts/SiteContentContext';
 
@@ -66,7 +65,7 @@ const ParticipationGuidePage: React.FC = () => {
                             Vui lòng nộp tóm tắt bài báo của bạn thông qua Google Form. Ban tổ chức sẽ xem xét và gửi thông báo kết quả qua email.
                         </p>
                         <a 
-                            href={SUBMISSION_FORM_URL}
+                            href={ABSTRACT_FORM_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg"
@@ -81,12 +80,14 @@ const ParticipationGuidePage: React.FC = () => {
                         <p className="mb-4 text-slate-100">
                             Sau khi tóm tắt được chấp thuận, tác giả vui lòng nộp báo cáo toàn văn và hoàn tất đăng ký thông tin tại đây.
                         </p>
-                        <Link 
-                            to="/submit-paper"
+                        <a
+                            href={FULL_PAPER_FORM_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="inline-block bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg"
                         >
-                            Đi đến Form Nộp Toàn văn <i className="fas fa-arrow-right ml-2"></i>
-                        </Link>
+                            Đi đến Form Nộp Toàn văn <i className="fas fa-external-link-alt ml-2"></i>
+                        </a>
                     </div>
                 </div>
             </SectionCard>

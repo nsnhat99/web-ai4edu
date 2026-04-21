@@ -3,12 +3,100 @@ const cors = require('cors');
 const multer = require('multer');
 const { sql } = require('@vercel/postgres');
 const { put, del, list } = require('@vercel/blob');
+const { appendRow, createResumableUpload, makeFilePublic } = require('./lib/google');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// --- PUBLIC SUBMISSION ENDPOINTS (Google Sheets + Drive) ---
+// File upload bypasses this server: FE gets a resumable session URL and PUTs directly to Drive.
+
+app.post('/api/drive/init-upload', async (req, res) => {
+  const { fileName, mimeType } = req.body || {};
+  if (!fileName || !mimeType) {
+    return res.status(400).json({ message: 'fileName and mimeType are required' });
+  }
+  try {
+    const { sessionUrl } = await createResumableUpload({ fileName, mimeType });
+    res.json({ sessionUrl });
+  } catch (error) {
+    console.error('init-upload error:', error);
+    res.status(500).json({ message: 'Failed to init Drive upload', details: error.message });
+  }
+});
+
+app.post('/api/public/papers', async (req, res) => {
+  const {
+    authorName, organization, email, phone, paperTitle, topic,
+    fileId, fileName,
+  } = req.body || {};
+  if (!authorName || !organization || !email || !paperTitle || !fileId) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    const meta = await makeFilePublic(fileId);
+    const driveUrl = meta.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;
+    const timestamp = new Date().toISOString();
+    await appendRow('Papers', [
+      timestamp, authorName, organization, email, phone || '',
+      paperTitle, String(topic || ''), fileName || '', driveUrl,
+      'Duyệt', 'Đang chờ duyệt', 'Đang chờ duyệt', 'Không trình bày',
+    ]);
+    res.status(201).json({ ok: true, driveUrl });
+  } catch (error) {
+    console.error('public/papers error:', error);
+    res.status(500).json({ message: 'Failed to submit paper', details: error.message });
+  }
+});
+
+app.post('/api/public/registrations', async (req, res) => {
+  const {
+    tab, name, organization, email, phone,
+    paperTitle, topic, delegateType, activities,
+    bankAccount, taxCode,
+    fileId, fileName,
+  } = req.body || {};
+  if (!tab || !name || !organization || !email) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    let driveUrl = '';
+    if (fileId) {
+      const meta = await makeFilePublic(fileId);
+      driveUrl = meta.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;
+    }
+    const timestamp = new Date().toISOString();
+    await appendRow('Registrations', [
+      timestamp, tab, name, organization, email, phone || '',
+      paperTitle || '', String(topic || ''),
+      delegateType || '', Array.isArray(activities) ? activities.join(', ') : (activities || ''),
+      bankAccount || '', taxCode || '',
+      fileName || '', driveUrl,
+    ]);
+    res.status(201).json({ ok: true, driveUrl });
+  } catch (error) {
+    console.error('public/registrations error:', error);
+    res.status(500).json({ message: 'Failed to submit registration', details: error.message });
+  }
+});
+
+app.post('/api/public/contacts', async (req, res) => {
+  const { name, email, subject, message } = req.body || {};
+  if (!name || !email || !message) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    const timestamp = new Date().toISOString();
+    await appendRow('Contacts', [timestamp, name, email, subject || '', message]);
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    console.error('public/contacts error:', error);
+    res.status(500).json({ message: 'Failed to submit contact', details: error.message });
+  }
+});
 
 // Multer config for file uploads (store in memory)
 const upload = multer({
@@ -175,11 +263,29 @@ app.get('/api/papers/:id', async (req, res) => {
 });
 
 app.post('/api/papers', async (req, res) => {
-  const { authorName, organization, paperTitle, topic } = req.body;
+  const {
+    authorName,
+    organization,
+    paperTitle,
+    topic,
+    abstractStatus,
+    fullTextStatus,
+    reviewStatus,
+    presentationStatus,
+  } = req.body;
   try {
     const { rows } = await sql`
       INSERT INTO papers ("authorName", organization, "paperTitle", topic, "abstractStatus", "fullTextStatus", "reviewStatus", "presentationStatus")
-      VALUES (${authorName}, ${organization}, ${paperTitle}, ${parseInt(topic, 10)}, 'Duyệt', 'Đang chờ duyệt', 'Đang chờ duyệt', 'Không trình bày')
+      VALUES (
+        ${authorName},
+        ${organization},
+        ${paperTitle},
+        ${parseInt(topic, 10)},
+        ${abstractStatus || 'Duyệt'},
+        ${fullTextStatus || 'Đang chờ duyệt'},
+        ${reviewStatus || 'Đang chờ duyệt'},
+        ${presentationStatus || 'Không trình bày'}
+      )
       RETURNING *;
     `;
     res.status(201).json(rows[0]);

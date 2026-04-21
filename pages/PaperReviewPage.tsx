@@ -262,7 +262,7 @@ const PaperReviewPage: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-screen-2xl mx-auto px-4">
+      <div className="max-w-screen-2xl mx-auto px-4 pt-28">
         <h1 className="text-4xl font-bold text-center mb-4 text-slate-100">Kết quả duyệt bài tham dự hội thảo</h1>
         <p className="text-center text-slate-100 text-lg mb-10">
           Danh sách các bài báo đã nộp và trạng thái duyệt, trình bày.

@@ -1,7 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CONTACTS } from '../constants';
+import { submitPublicContact } from '../api';
 
 const ContactPage: React.FC = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!name || !email || !message) {
+      setError('Vui lòng điền đầy đủ họ tên, email và nội dung.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await submitPublicContact({ name, email, subject, message });
+      setSent(true);
+      setName(''); setEmail(''); setSubject(''); setMessage('');
+      setTimeout(() => setSent(false), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const inputClass = "w-full bg-[#0a1628]/80 border border-blue-500/15 rounded-xl px-4 py-3 text-blue-50 text-sm placeholder-slate-500 focus:outline-none focus:border-blue-400/40 focus:ring-1 focus:ring-blue-400/20 transition-all";
+  const labelClass = "block text-blue-200/80 text-sm font-medium mb-2";
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       <div className="text-center mb-12">
@@ -67,6 +99,54 @@ const ContactPage: React.FC = () => {
             Các địa điểm nên đến thăm quan tại Hà Nội — Thông tin sẽ được cập nhật.
           </p>
         </div>
+      </div>
+
+      {/* Contact form */}
+      <div className="bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl p-6 sm:p-8 mb-8">
+        <div className="flex items-center gap-3 mb-5">
+          <i className="fas fa-paper-plane text-blue-400"></i>
+          <h3 className="text-lg font-bold text-blue-50">Gửi câu hỏi cho Ban tổ chức</h3>
+        </div>
+
+        {sent && (
+          <div className="mb-4 bg-emerald-500/15 border border-emerald-400/30 rounded-xl px-4 py-3 text-emerald-200 text-sm">
+            Đã gửi thành công! Chúng tôi sẽ phản hồi qua email.
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 bg-red-500/15 border border-red-400/30 rounded-xl px-4 py-3 text-red-200 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Họ và tên *</label>
+              <input type="text" required value={name} onChange={e => setName(e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Email *</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Tiêu đề</label>
+            <input type="text" value={subject} onChange={e => setSubject(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Nội dung *</label>
+            <textarea required value={message} onChange={e => setMessage(e.target.value)} rows={5} className={inputClass} />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-500/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <i className="fas fa-paper-plane mr-2"></i>
+            {isLoading ? 'Đang gửi...' : 'Gửi'}
+          </button>
+        </form>
       </div>
 
       {/* Map placeholder */}
