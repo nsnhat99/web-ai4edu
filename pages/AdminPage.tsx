@@ -383,7 +383,7 @@ const AdminPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto pt-28 px-4 pb-16">
             <div>
                 <h1 className="text-4xl font-bold text-center mb-4 text-slate-100">Admin Dashboard</h1>
                 <p className="text-center text-slate-100 text-lg mb-10">Thống kê và báo cáo tổng quan hội thảo.</p>
@@ -394,7 +394,7 @@ const AdminPage: React.FC = () => {
             </div>
 
             {/* Content Management Section */}
-            <div className="space-y-12">
+            <div className="space-y-12 mt-16">
                 <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-100 border-b-2 border-slate-700 pb-4">Quản lý nội dung</h2>
                 
                 {/* General Conference Info */}
@@ -582,11 +582,11 @@ const AdminPage: React.FC = () => {
             </div>
 
             <div className="mt-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-100">Database Management</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-100">Quản lý cơ sở dữ liệu</h2>
                 <div className="bg-slate-800/50 p-6 rounded-lg shadow-md border border-slate-700/50 text-center">
-                    <p className="text-slate-100 mb-4">View the raw data used in this mock application.</p>
+                    <p className="text-slate-100 mb-4">Xem dữ liệu thô của ứng dụng.</p>
                     <Link to="/admin/database" className="inline-block bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 shadow-lg">
-                        <i className="fas fa-database mr-2"></i>View Mock Database
+                        <i className="fas fa-database mr-2"></i>Xem cơ sở dữ liệu
                     </Link>
                 </div>
             </div>
