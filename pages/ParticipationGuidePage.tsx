@@ -47,7 +47,7 @@ const ParticipationGuidePage: React.FC = () => {
     const { siteContent } = useSiteContent();
 
     return (
-        <div className="max-w-4xl mx-auto space-y-12">
+        <div className="max-w-4xl mx-auto space-y-12 pt-28 pb-16 px-4">
             <div className="text-center">
                 <h1 className="text-4xl font-bold mb-4 text-slate-100">Hướng dẫn Tham dự & Nộp bài</h1>
                 <p className="text-slate-100 text-xl">Tất cả thông tin bạn cần để tham gia và đóng góp cho hội thảo.</p>

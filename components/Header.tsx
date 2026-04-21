@@ -22,49 +22,70 @@ const Header: React.FC = () => {
   const renderNavLink = (link: NavLink, isMobile: boolean = false) => {
     if (link.children && link.children.length > 0) {
       const isOpen = openDropdown === link.id;
+      const dropdownChildren = link.children.map((child) => (
+        child.external ? (
+          <a
+            key={child.id}
+            href={child.path || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeAll}
+            className="block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 text-blue-100/70 hover:text-white hover:bg-blue-500/10"
+          >
+            {child.name}
+            <i className="fas fa-external-link-alt text-[10px] ml-2 opacity-60"></i>
+          </a>
+        ) : (
+          <RouterNavLink
+            key={child.id}
+            to={child.path || '#'}
+            onClick={closeAll}
+            className={({ isActive }) =>
+              `block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 ${
+                isActive
+                  ? 'text-blue-300 bg-blue-500/15 font-medium'
+                  : 'text-blue-100/70 hover:text-white hover:bg-blue-500/10'
+              }`
+            }
+          >
+            {child.name}
+          </RouterNavLink>
+        )
+      ));
+
+      if (isMobile) {
+        return (
+          <div key={link.id} className="relative">
+            <button
+              onClick={() => setOpenDropdown(isOpen ? null : link.id)}
+              className="flex items-center gap-1 py-2 px-3 text-blue-100/80 rounded-lg hover:text-white hover:bg-white/10 transition-all duration-200 text-sm font-medium"
+            >
+              {link.name}
+              <i className={`fas fa-chevron-down text-[10px] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}></i>
+            </button>
+            {isOpen && (
+              <div className="relative mt-1 ml-4 min-w-[220px] bg-[#0a1628]/95 backdrop-blur-xl border border-blue-500/20 rounded-xl shadow-2xl shadow-blue-900/30 overflow-hidden z-50">
+                {dropdownChildren}
+              </div>
+            )}
+          </div>
+        );
+      }
+
       return (
-        <div key={link.id} className="relative">
+        <div key={link.id} className="relative group">
           <button
-            onClick={() => setOpenDropdown(isOpen ? null : link.id)}
-            className="flex items-center gap-1 py-2 px-3 text-blue-100/80 rounded-lg hover:text-white hover:bg-white/10 transition-all duration-200 text-sm font-medium"
+            type="button"
+            className="flex items-center gap-1 py-2 px-3 text-blue-100/80 rounded-lg hover:text-white hover:bg-white/10 group-hover:text-white group-hover:bg-white/10 transition-all duration-200 text-sm font-medium"
           >
             {link.name}
-            <i className={`fas fa-chevron-down text-[10px] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}></i>
+            <i className="fas fa-chevron-down text-[10px] transition-transform duration-200 group-hover:rotate-180"></i>
           </button>
-          {isOpen && (
-            <div className={`${isMobile ? 'relative mt-1 ml-4' : 'absolute top-full left-0 mt-2'} min-w-[220px] bg-[#0a1628]/95 backdrop-blur-xl border border-blue-500/20 rounded-xl shadow-2xl shadow-blue-900/30 overflow-hidden z-50`}>
-              {link.children.map((child) => (
-                child.external ? (
-                  <a
-                    key={child.id}
-                    href={child.path || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeAll}
-                    className="block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 text-blue-100/70 hover:text-white hover:bg-blue-500/10"
-                  >
-                    {child.name}
-                    <i className="fas fa-external-link-alt text-[10px] ml-2 opacity-60"></i>
-                  </a>
-                ) : (
-                  <RouterNavLink
-                    key={child.id}
-                    to={child.path || '#'}
-                    onClick={closeAll}
-                    className={({ isActive }) =>
-                      `block px-5 py-3 text-sm transition-all duration-200 border-b border-blue-500/5 last:border-0 ${
-                        isActive
-                          ? 'text-blue-300 bg-blue-500/15 font-medium'
-                          : 'text-blue-100/70 hover:text-white hover:bg-blue-500/10'
-                      }`
-                    }
-                  >
-                    {child.name}
-                  </RouterNavLink>
-                )
-              ))}
+          <div className="absolute top-full left-0 pt-2 min-w-[220px] invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 z-50">
+            <div className="bg-[#0a1628]/95 backdrop-blur-xl border border-blue-500/20 rounded-xl shadow-2xl shadow-blue-900/30 overflow-hidden">
+              {dropdownChildren}
             </div>
-          )}
+          </div>
         </div>
       );
     }
