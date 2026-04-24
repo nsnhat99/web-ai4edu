@@ -128,7 +128,7 @@ const HomePage: React.FC = () => {
                 to={`/schedule?session=${topic.id}`}
                 onMouseEnter={() => setHoveredTopic(topic.id)}
                 onMouseLeave={() => setHoveredTopic(null)}
-                className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+                className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 flex flex-col ${
                   hoveredTopic === topic.id
                     ? 'border-blue-400/40 -translate-y-2 shadow-2xl shadow-blue-600/20'
                     : 'border-blue-500/10 shadow-lg shadow-black/20'
@@ -139,7 +139,7 @@ const HomePage: React.FC = () => {
                     : 'linear-gradient(160deg, rgba(12,30,58,0.8), rgba(7,20,55,0.9))',
                 }}
               >
-                <div className="p-8 sm:p-10 relative z-10">
+                <div className="p-8 sm:p-10 relative z-10 flex flex-col flex-1">
                   <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300 text-center">{topic.icon}</div>
                   <h3 className="text-lg sm:text-xl font-bold text-blue-50 leading-snug mb-3">
                     {topic.title}
@@ -147,7 +147,7 @@ const HomePage: React.FC = () => {
                   <p className="text-slate-400 text-sm leading-relaxed mb-6">
                     {topic.description}
                   </p>
-                  <div className="flex items-center gap-2 text-blue-400 text-sm font-semibold">
+                  <div className="mt-auto flex items-center gap-2 text-blue-400 text-sm font-semibold">
                     <span>Xem chương trình</span>
                     <i className="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform duration-300"></i>
                   </div>
