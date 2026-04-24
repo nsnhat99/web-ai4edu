@@ -15,6 +15,7 @@ const initialSiteContent = {
   universityLogo: 'https://picsum.photos/seed/hnmu-logo/60/60',
   heroBackground: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1920&q=80',
   callForPapersImage: 'https://picsum.photos/seed/ai4edu-cfp/842/1191',
+  eventBannerImage: 'https://picsum.photos/seed/ai4edu-event-banner/1600/500',
   keynoteSpeakers: KEYNOTE_SPEAKERS_DATA,
   conferenceTopics: CONFERENCE_TOPICS_DATA,
   sponsors: SPONSORS_DATA,

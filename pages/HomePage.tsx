@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CONFERENCE_TOPICS } from '../constants';
+import { useSiteContent } from '../contexts/SiteContentContext';
 
 const HomePage: React.FC = () => {
   const [hoveredTopic, setHoveredTopic] = useState<number | null>(null);
+  const { siteContent } = useSiteContent();
+  const speakers = siteContent.keynoteSpeakers || [];
+  const eventBanner = siteContent.eventBannerImage;
 
   return (
     <div className="flex flex-col">
@@ -159,6 +163,60 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ==================== EVENT BANNER ==================== */}
+      {eventBanner && (
+        <section className="px-4 sm:px-6 pt-8">
+          <div className="max-w-6xl mx-auto">
+            <img
+              src={eventBanner}
+              alt="Banner sự kiện"
+              className="w-full h-auto rounded-2xl border border-blue-500/10 shadow-lg shadow-black/30 object-cover"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ==================== BÁO CÁO VIÊN ==================== */}
+      {speakers.length > 0 && (
+        <section className="py-20 px-4 sm:px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-14">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-blue-50 mb-4 tracking-tight">
+                Báo cáo viên
+              </h2>
+              <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto">
+                Các chuyên gia, diễn giả hàng đầu tham gia hội thảo
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {speakers.map((sp) => (
+                <div
+                  key={sp.id}
+                  className="group bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl p-6 text-center hover:border-blue-400/30 hover:-translate-y-1 transition-all duration-300"
+                >
+                  <img
+                    src={sp.imageUrl}
+                    alt={sp.name}
+                    className="w-32 h-32 mx-auto mb-5 rounded-full object-cover border-2 border-blue-400/30 group-hover:border-blue-400/60 transition"
+                  />
+                  <h3 className="text-lg font-bold text-blue-50 mb-1">{sp.name}</h3>
+                  <div className="text-blue-300/80 text-sm mb-3">{sp.affiliation}</div>
+                  {sp.keynoteTopic && (
+                    <div className="text-blue-400/90 text-xs font-semibold uppercase tracking-wider mb-3">
+                      {sp.keynoteTopic}
+                    </div>
+                  )}
+                  {sp.bio && (
+                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-3">{sp.bio}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ==================== CTA ==================== */}
       <section className="py-24 px-4 sm:px-6 text-center relative">

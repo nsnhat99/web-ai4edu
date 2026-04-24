@@ -512,6 +512,7 @@ const AdminPage: React.FC = () => {
                         <ImageUploadCard title="Logo trường đại học" currentImage={siteContent.universityLogo} onImageSelect={(file) => handleImageUpload('universityLogo', file)} />
                         <ImageUploadCard title="Hình nền trang chủ" currentImage={siteContent.heroBackground} onImageSelect={(file) => handleImageUpload('heroBackground', file)} />
                         <ImageUploadCard title="Hình nền kêu gọi bài báo" currentImage={siteContent.callForPapersImage} onImageSelect={(file) => handleImageUpload('callForPapersImage', file)} />
+                        <ImageUploadCard title="Banner sự kiện (trang chủ)" currentImage={siteContent.eventBannerImage} onImageSelect={(file) => handleImageUpload('eventBannerImage', file)} />
                     </div>
                 </div>
             </div>

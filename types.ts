@@ -154,6 +154,7 @@ export type SiteContent = {
   universityLogo: string;
   heroBackground: string;
   callForPapersImage: string;
+  eventBannerImage: string;
   keynoteSpeakers: KeynoteSpeaker[];
   conferenceTopics: ConferenceTopic[];
   sponsors: Sponsor[];
