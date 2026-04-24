@@ -140,7 +140,7 @@ const HomePage: React.FC = () => {
                 }}
               >
                 <div className="p-8 sm:p-10 relative z-10">
-                  <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">{topic.icon}</div>
+                  <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300 text-center">{topic.icon}</div>
                   <h3 className="text-lg sm:text-xl font-bold text-blue-50 leading-snug mb-3">
                     {topic.title}
                   </h3>

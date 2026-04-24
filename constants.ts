@@ -21,23 +21,23 @@ export const NAV_LINKS: NavLink[] = [
 export const CONFERENCE_TOPICS: ConferenceTopic[] = [
   {
     id: 1,
-    title: "Bản sắc văn hóa trong kỷ nguyên số",
-    icon: "🏛️",
-    description: "Nghiên cứu, bảo tồn và phát huy giá trị văn hóa truyền thống trong bối cảnh chuyển đổi số toàn diện.",
+    title: "AI trong giảng dạy: Từ công cụ đến cộng sự",
+    icon: "👨‍🏫",
+    description: "Ứng dụng AI để thiết kế bài giảng thông minh và đổi mới kiểm tra, đánh giá.",
     color: "#1e3a8a",
   },
   {
     id: 2,
-    title: "Giáo dục sáng tạo và phát triển bền vững trong kỷ nguyên số",
+    title: "AI trong học tập: Hình thành thế hệ kiến tạo",
     icon: "🎓",
-    description: "Đổi mới phương pháp giảng dạy, học tập sáng tạo nhằm phát triển bền vững trong môi trường số hóa.",
+    description: "Cá nhân hóa lộ trình học tập và hướng dẫn học sinh tự thiết kế ứng dụng AI.",
     color: "#1d4ed8",
   },
   {
     id: 3,
-    title: "Trí tuệ nhân tạo trong bảo tồn, phát triển văn hóa và giáo dục",
-    icon: "🤖",
-    description: "Ứng dụng AI trong giáo dục phổ thông, quản trị giáo dục và bảo tồn di sản văn hóa.",
+    title: "AI trong quản trị: Chuyển đổi số thực chất",
+    icon: "🏫",
+    description: "Quản trị dựa trên dữ liệu (Big Data) và tối ưu hóa vận hành nhà trường.",
     color: "#2563eb",
   },
 ];

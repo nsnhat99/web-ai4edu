@@ -29,24 +29,24 @@ const KEYNOTE_SPEAKERS_DATA = [
 const CONFERENCE_TOPICS_DATA = [
   {
     id: 1,
-    title: 'Bản sắc văn hóa trong kỷ nguyên số',
-    imageUrl: 'https://picsum.photos/seed/ai4edu-culture/800/600',
+    title: 'AI trong giảng dạy: Từ công cụ đến cộng sự sư phạm',
+    imageUrl: 'https://picsum.photos/seed/ai4edu-teaching/800/600',
     link: '/topic/1',
-    description: 'Nghiên cứu, bảo tồn và phát huy giá trị văn hóa truyền thống trong bối cảnh chuyển đổi số toàn diện.'
+    description: 'Ứng dụng AI để thiết kế bài giảng thông minh và đổi mới kiểm tra, đánh giá.'
   },
   {
     id: 2,
-    title: 'Giáo dục sáng tạo và phát triển bền vững trong kỷ nguyên số',
-    imageUrl: 'https://picsum.photos/seed/ai4edu-education/800/600',
+    title: 'AI trong học tập: Hình thành thế hệ kiến tạo',
+    imageUrl: 'https://picsum.photos/seed/ai4edu-learning/800/600',
     link: '/topic/2',
-    description: 'Đổi mới phương pháp giảng dạy, học tập sáng tạo nhằm phát triển bền vững trong môi trường số hóa.'
+    description: 'Cá nhân hóa lộ trình học tập và hướng dẫn học sinh tự thiết kế ứng dụng AI.'
   },
   {
     id: 3,
-    title: 'Trí tuệ nhân tạo trong bảo tồn, phát triển văn hóa và giáo dục',
-    imageUrl: 'https://picsum.photos/seed/ai4edu-ai/800/600',
+    title: 'AI trong quản trị: Chuyển đổi số thực chất',
+    imageUrl: 'https://picsum.photos/seed/ai4edu-governance/800/600',
     link: '/topic/3',
-    description: 'Ứng dụng AI trong giáo dục phổ thông, quản trị giáo dục và bảo tồn di sản văn hóa.'
+    description: 'Quản trị dựa trên dữ liệu (Big Data) và tối ưu hóa vận hành nhà trường.'
   },
 ];
 
