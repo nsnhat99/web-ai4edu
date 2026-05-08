@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CONFERENCE_TOPICS } from '../constants';
 import { useSiteContent } from '../contexts/SiteContentContext';
+import RegistrationModal from '../components/RegistrationModal';
 
 const HomePage: React.FC = () => {
   const [hoveredTopic, setHoveredTopic] = useState<number | null>(null);
+  const [isRegOpen, setIsRegOpen] = useState(false);
   const { siteContent } = useSiteContent();
   const speakers = siteContent.keynoteSpeakers || [];
   const eventBanner = siteContent.eventBannerImage;
@@ -70,13 +72,14 @@ const HomePage: React.FC = () => {
               <i className="fas fa-calendar-alt mr-2"></i>
               Xem chương trình
             </Link>
-            <Link
-              to="/register"
+            <button
+              type="button"
+              onClick={() => setIsRegOpen(true)}
               className="px-8 py-3.5 rounded-xl border border-blue-400/30 bg-blue-500/10 text-blue-200 font-bold text-sm sm:text-base hover:bg-blue-500/20 hover:-translate-y-0.5 transition-all duration-300 backdrop-blur-sm"
             >
               <i className="fas fa-user-plus mr-2"></i>
               Đăng ký tham dự
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -229,12 +232,13 @@ const HomePage: React.FC = () => {
             Hãy đăng ký tham dự ngay hôm nay để cùng chúng tôi khám phá những ý tưởng mới, gặp gỡ các chuyên gia và mở rộng mạng lưới chuyên môn.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Link
-              to="/register"
+            <button
+              type="button"
+              onClick={() => setIsRegOpen(true)}
               className="px-10 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all duration-300"
             >
               Đăng ký ngay
-            </Link>
+            </button>
             <Link
               to="/schedule"
               className="px-10 py-4 rounded-xl border border-blue-400/30 bg-blue-500/10 text-blue-200 font-bold hover:bg-blue-500/20 hover:-translate-y-0.5 transition-all duration-300"
@@ -244,6 +248,8 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
     </div>
   );
 };

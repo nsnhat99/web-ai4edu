@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -7,7 +7,6 @@ import SchedulePage from './pages/SchedulePage';
 import IntroductionPage from './pages/IntroductionPage';
 import TopicsPage from './pages/TopicsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
-import RegistrationPage from './pages/RegistrationPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
@@ -38,13 +37,9 @@ const App: React.FC = () => {
                       <Route path="/topics" element={<TopicsPage />} />
                       <Route path="/schedule" element={<SchedulePage />} />
                       <Route path="/announcements" element={<AnnouncementsPage />} />
-                      <Route path="/submit-abstract" element={<RegistrationPage formType="abstract" />} />
-                      <Route path="/submit-full" element={<RegistrationPage formType="full" />} />
-                      <Route path="/register" element={<RegistrationPage formType="attend" />} />
                       <Route path="/contact" element={<ContactPage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/participation-guide" element={<ParticipationGuidePage />} />
-                      <Route path="/submit-paper" element={<Navigate to="/submit-full" replace />} />
                       <Route path="/paper-review" element={<PaperReviewPage />} />
                       <Route
                         path="/admin"

@@ -150,10 +150,6 @@ export type Registration = {
 };
 
 export type SiteContent = {
-  conferenceLogo: string;
-  universityLogo: string;
-  heroBackground: string;
-  callForPapersImage: string;
   eventBannerImage: string;
   keynoteSpeakers: KeynoteSpeaker[];
   conferenceTopics: ConferenceTopic[];

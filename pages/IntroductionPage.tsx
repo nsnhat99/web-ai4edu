@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import RegistrationModal from '../components/RegistrationModal';
 
 const IntroductionPage: React.FC = () => {
+  const [isRegOpen, setIsRegOpen] = useState(false);
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       <div className="text-center mb-12">
@@ -53,10 +56,16 @@ const IntroductionPage: React.FC = () => {
         <Link to="/schedule" className="px-6 py-3 rounded-xl bg-blue-500/15 border border-blue-400/20 text-blue-200 text-sm font-semibold hover:bg-blue-500/25 transition-all">
           <i className="fas fa-calendar mr-2"></i>Chương trình
         </Link>
-        <Link to="/register" className="px-6 py-3 rounded-xl bg-blue-600/30 border border-blue-400/30 text-blue-100 text-sm font-semibold hover:bg-blue-600/40 transition-all">
+        <button
+          type="button"
+          onClick={() => setIsRegOpen(true)}
+          className="px-6 py-3 rounded-xl bg-blue-600/30 border border-blue-400/30 text-blue-100 text-sm font-semibold hover:bg-blue-600/40 transition-all"
+        >
           <i className="fas fa-user-plus mr-2"></i>Đăng ký
-        </Link>
+        </button>
       </div>
+
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
     </div>
   );
 };
