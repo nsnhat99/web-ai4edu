@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAnnouncements } from '../contexts/AnnouncementContext';
 
 const AnnouncementsPage: React.FC = () => {
   const { announcements } = useAnnouncements();
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxSrc(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxSrc]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
@@ -41,20 +49,27 @@ const AnnouncementsPage: React.FC = () => {
                     )}
                   </div>
 
-                  <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line mt-2">
-                    {item.content}
-                  </p>
+                  {item.content && (
+                    <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line mt-2">
+                      {item.content}
+                    </p>
+                  )}
 
                   {item.contentImages && item.contentImages.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                       {item.contentImages.map((src, idx) => (
-                        <a key={idx} href={src} target="_blank" rel="noopener noreferrer">
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setLightboxSrc(src)}
+                          className="block w-full focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg"
+                        >
                           <img
                             src={src}
                             alt={`${item.title} - ảnh ${idx + 1}`}
-                            className="w-full h-32 sm:h-36 object-cover rounded-lg border border-blue-500/10 hover:border-blue-400/30 transition-colors"
+                            className="w-full h-32 sm:h-36 object-cover rounded-lg border border-blue-500/10 hover:border-blue-400/30 transition-colors cursor-zoom-in"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -76,6 +91,28 @@ const AnnouncementsPage: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {lightboxSrc && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxSrc(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl"
+            aria-label="Đóng"
+          >
+            ×
+          </button>
+          <img
+            src={lightboxSrc}
+            alt="Ảnh phóng to"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 

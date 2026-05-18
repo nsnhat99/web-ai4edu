@@ -188,8 +188,8 @@ const AnnouncementModal: React.FC<{
     };
 
     const handleSubmit = async () => {
-        if (!form.title.trim() || !form.content.trim()) {
-            alert('Vui lòng nhập tiêu đề và nội dung.');
+        if (!form.title.trim()) {
+            alert('Vui lòng nhập tiêu đề.');
             return;
         }
         setSaving(true);
@@ -220,7 +220,7 @@ const AnnouncementModal: React.FC<{
                         <input type="text" name="date" value={form.date} onChange={handleChange} className={inputStyles} placeholder="Để trống nếu muốn dùng ngày hiện tại" />
                     </div>
                     <div>
-                        <label className={labelStyles}>Nội dung *</label>
+                        <label className={labelStyles}>Nội dung (tùy chọn)</label>
                         <textarea name="content" value={form.content} onChange={handleChange} className={inputStyles} rows={5} />
                     </div>
                     <div>
