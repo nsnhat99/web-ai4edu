@@ -144,17 +144,23 @@ export const deletePaper = (id: number) => {
   });
 };
 
-export const uploadFullTextFile = (paperId: number, file: File) => {
+// --- IMAGE UPLOADS (Vercel Blob) ---
+export const uploadImage = (file: File): Promise<{ url: string }> => {
   const formData = new FormData();
   formData.append('file', file);
-  return fetchAPIWithFile(`/papers/${paperId}/upload-fulltext`, formData);
+  return fetchAPIWithFile('/uploads/image', formData);
 };
 
-export const deleteFullTextFile = (paperId: number) => {
-  return fetchAPI(`/papers/${paperId}/delete-fulltext`, {
-    method: 'DELETE',
-  });
+export const deleteImage = async (url: string): Promise<void> => {
+  try {
+    await fetch(`${API_BASE_URL}/uploads/image?url=${encodeURIComponent(url)}`, {
+      method: 'DELETE',
+    });
+  } catch { /* best-effort */ }
 };
+
+export const isBlobUrl = (s?: string | null): s is string =>
+  !!s && /^https?:\/\//.test(s) && !s.startsWith('data:');
 
 // --- PUBLIC SUBMISSIONS (Google Sheets + Drive) ---
 

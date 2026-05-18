@@ -26,140 +26,12 @@ const topicStyles: { [key: number]: string } = {
   3: 'bg-indigo-900/70 text-blue-300 border border-indigo-700',
 };
 
-// File Manager Component
-const FileManager: React.FC<{
-  paper: DetailedPaperSubmission;
-  onUpload: (paperId: number, file: File) => void;
-  onDelete: (paperId: number) => void;
-}> = ({ paper, onUpload, onDelete }) => {
-  const [uploadingFulltext, setUploadingFulltext] = useState(false);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File quá lớn. Vui lòng chọn file nhỏ hơn 10MB.');
-      return;
-    }
-
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Chỉ chấp nhận file PDF, DOC, hoặc DOCX.');
-      return;
-    }
-
-    setUploadingFulltext(true);
-
-    try {
-      await onUpload(paper.id, file);
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Có lỗi xảy ra khi tải file lên.');
-    } finally {
-      setUploadingFulltext(false);
-      // Reset input
-      e.target.value = '';
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa file toàn văn này không?`)) {
-      return;
-    }
-
-    try {
-      await onDelete(paper.id);
-    } catch (error) {
-      console.error('Delete error:', error);
-      alert('Có lỗi xảy ra khi xóa file.');
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* Fulltext File */}
-      <div className="border border-slate-600 rounded-lg p-4 bg-slate-800/50">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-semibold text-slate-100">File Toàn văn</h4>
-          {paper.fullTextUrl && (
-            <span className="text-xs text-green-400">
-              <i className="fas fa-check-circle mr-1"></i>
-              Đã có file
-            </span>
-          )}
-        </div>
-
-        {paper.fullTextUrl ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <i className="fas fa-file-alt text-blue-400"></i>
-              <span className="truncate flex-1">{paper.fullTextFileName || 'fulltext.pdf'}</span>
-            </div>
-            <div className="flex gap-2">
-              <a
-                href={paper.fullTextUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 text-center px-3 py-2 text-xs bg-blue-900/50 hover:bg-blue-800/50 text-blue-300 rounded border border-blue-700 transition-colors"
-              >
-                <i className="fas fa-download mr-1"></i>
-                Tải xuống
-              </a>
-              <button
-                onClick={handleDelete}
-                className="px-3 py-2 text-xs bg-red-900/50 hover:bg-red-800/50 text-red-300 rounded border border-red-700 transition-colors"
-                title="Xóa file"
-              >
-                <i className="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="relative">
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => handleFileUpload(e)}
-              disabled={uploadingFulltext}
-              className="hidden"
-              id={`fulltext-upload-${paper.id}`}
-            />
-            <label
-              htmlFor={`fulltext-upload-${paper.id}`}
-              className={`block w-full text-center px-3 py-2 text-xs rounded border cursor-pointer transition-colors ${uploadingFulltext
-                  ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed'
-                  : 'bg-blue-900/50 hover:bg-blue-800/50 text-blue-300 border-blue-700'
-                }`}
-            >
-              {uploadingFulltext ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-1"></i>
-                  Đang tải lên...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-upload mr-1"></i>
-                  Tải lên file toàn văn
-                </>
-              )}
-            </label>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Edit Paper Modal Component with File Manager
+// Edit Paper Modal Component
 const EditPaperModal: React.FC<{
   paper: DetailedPaperSubmission;
   onSave: (paperId: number, data: Partial<DetailedPaperSubmission>) => void;
   onClose: () => void;
-  onUploadFile: (paperId: Number, file: File) => void;
-  onDeleteFile: (paperId: Number) => void;
-}> = ({ paper, onSave, onClose, onUploadFile, onDeleteFile }) => {
+}> = ({ paper, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     authorName: paper.authorName,
     organization: paper.organization,
@@ -197,18 +69,6 @@ const EditPaperModal: React.FC<{
           </div>
         </div>
 
-        <hr className="border-slate-600 my-6" />
-
-        {/* File Manager */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Quản lý file</h3>
-          <FileManager
-            paper={paper}
-            onUpload={onUploadFile}
-            onDelete={onDeleteFile}
-          />
-        </div>
-
         {/* Action Buttons */}
         <div className="flex justify-end gap-4 pt-4 border-t border-slate-600">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-slate-200 bg-slate-600 hover:bg-slate-500 transition-colors">
@@ -233,22 +93,12 @@ const PaperReviewPage: React.FC = () => {
     updateReviewStatus,
     updatePresentationStatus,
     deletePaper,
-    uploadFullTextFile,
-    deleteFullTextFile
   } = usePapers();
   const [editingPaper, setEditingPaper] = useState<DetailedPaperSubmission | null>(null);
 
   const handleSavePaper = (paperId: number, data: Partial<DetailedPaperSubmission>) => {
     updatePaperDetails(paperId, data);
     setEditingPaper(null);
-  };
-
-  const handleUploadFile = async (paperId: number, file: File) => {
-    await uploadFullTextFile(paperId, file);
-  };
-
-  const handleDeleteFile = async (paperId: number) => {
-    await deleteFullTextFile(paperId);
   };
 
   const handleDelete = (id: number) => {
@@ -277,7 +127,6 @@ const PaperReviewPage: React.FC = () => {
                 <col className="w-48" /> {/* Đơn vị */}
                 <col className="min-w-[320px] w-auto" /> {/* Tên bài - flexible */}
                 <col className="w-24" /> {/* Chủ đề */}
-                {currentUser?.role === 'admin' && <col className="w-20" />} {/* Files */}
                 <col className="w-[110px]" /> {/* Tóm tắt */}
                 <col className="w-[110px]" /> {/* Toàn văn */}
                 <col className="w-[110px]" /> {/* Kết quả */}
@@ -291,9 +140,6 @@ const PaperReviewPage: React.FC = () => {
                   <th scope="col" className="px-3 py-3">Đơn vị công tác</th>
                   <th scope="col" className="px-3 py-3">Tên bài</th>
                   <th scope="col" className="px-2 py-3 text-center">Chủ đề</th>
-                  {currentUser?.role === 'admin' && (
-                    <th scope="col" className="px-2 py-3 text-center">Files</th>
-                  )}
                   <th scope="col" className="px-2 py-3 text-center">Tóm tắt</th>
                   <th scope="col" className="px-2 py-3 text-center">Toàn văn</th>
                   <th scope="col" className="px-2 py-3 text-center">Kết quả</th>
@@ -323,24 +169,6 @@ const PaperReviewPage: React.FC = () => {
                         Tiểu ban {paper.topic}
                       </span>
                     </td>
-                    {currentUser?.role === 'admin' && (
-                      <td className="px-2 py-4 text-center">
-                        {paper.fullTextUrl ? (
-                          <a
-                            href={paper.fullTextUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-400 hover:text-green-300 text-xs whitespace-nowrap"
-                            title="Tải file toàn văn"
-                          >
-                            <i className="fas fa-file-alt mr-1"></i>
-                            Có
-                          </a>
-                        ) : (
-                          <span className="text-slate-500 text-xs">—</span>
-                        )}
-                      </td>
-                    )}
                     <td className="px-2 py-4 text-center">
                       {currentUser?.role === 'admin' ? (
                         <select
@@ -445,8 +273,6 @@ const PaperReviewPage: React.FC = () => {
           paper={editingPaper}
           onSave={handleSavePaper}
           onClose={() => setEditingPaper(null)}
-          onUploadFile={handleUploadFile}
-          onDeleteFile={handleDeleteFile}
         />
       )}
     </>

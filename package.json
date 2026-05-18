@@ -7,6 +7,8 @@
     "start": "echo 'This project is intended for Vercel deployment.'",
     "build": "mkdir -p dist && esbuild index.tsx --bundle --outfile=dist/bundle.js --jsx=automatic --platform=browser --target=es2020 --define:process.env.NODE_ENV='\"production\"' && cp index.html dist/index.html && sed -i 's|<script type=\"module\" src=\"/index.tsx\"></script>|<script src=\"/bundle.js\"></script>|' dist/index.html && sed -i '/<script type=\"importmap\">/,/<\\/script>/d' dist/index.html",
     "seed": "node api/seed.js",
+    "migrate-images": "node api/migrate-base64-to-blob.js",
+    "cleanup-paper-blobs": "node api/cleanup-paper-blobs.js",
     "postinstall": "node api/seed.js"
   },
   "dependencies": {

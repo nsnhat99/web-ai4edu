@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// FIX: Import SiteContent from types.ts where it is now centrally defined.
 import type { KeynoteSpeaker, Sponsor, NavLink, SiteContent, DetailedPaperSubmission, ReviewStatus, PresentationStatus, Announcement } from '../types';
 import { useSiteContent } from '../contexts/SiteContentContext';
 import { usePapers } from '../contexts/PaperContext';
@@ -8,6 +7,42 @@ import type { AddPaperInput } from '../contexts/PaperContext';
 import { useRegistrations } from '../contexts/RegistrationContext';
 import { useAnnouncements } from '../contexts/AnnouncementContext';
 import { CONFERENCE_TOPICS } from '../constants';
+import * as api from '../api';
+
+const BlobImagePicker: React.FC<{
+    multiple?: boolean;
+    onUploaded: (urls: string[]) => void;
+    label?: string;
+}> = ({ multiple = false, onUploaded, label }) => {
+    const [uploading, setUploading] = useState(false);
+    const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        setUploading(true);
+        try {
+            const results = await Promise.all(files.map(f => api.uploadImage(f)));
+            onUploaded(results.map(r => r.url));
+        } catch (err: any) {
+            alert(`Upload ảnh thất bại: ${err.message || err}`);
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
+    };
+    return (
+        <>
+            <input
+                type="file"
+                accept="image/*"
+                multiple={multiple}
+                disabled={uploading}
+                onChange={handleChange}
+                className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50 disabled:opacity-50"
+            />
+            {uploading && <p className="text-xs text-blue-300 mt-1">{label || 'Đang tải lên...'}</p>}
+        </>
+    );
+};
 
 const REVIEW_STATUSES: ReviewStatus[] = ['Duyệt', 'Không duyệt', 'Đang chờ duyệt'];
 const PRESENTATION_STATUSES: PresentationStatus[] = ['Trình bày', 'Không trình bày'];
@@ -15,9 +50,8 @@ const PRESENTATION_STATUSES: PresentationStatus[] = ['Trình bày', 'Không trì
 const PaperModal: React.FC<{
     paper: DetailedPaperSubmission | null;
     onClose: () => void;
-    onSave: (data: AddPaperInput, file: File | null) => Promise<void>;
-    onDeleteFile?: () => Promise<void>;
-}> = ({ paper, onClose, onSave, onDeleteFile }) => {
+    onSave: (data: AddPaperInput) => Promise<void>;
+}> = ({ paper, onClose, onSave }) => {
     const [form, setForm] = useState<AddPaperInput>({
         authorName: paper?.authorName || '',
         organization: paper?.organization || '',
@@ -28,7 +62,6 @@ const PaperModal: React.FC<{
         reviewStatus: paper?.reviewStatus || 'Đang chờ duyệt',
         presentationStatus: paper?.presentationStatus || 'Không trình bày',
     });
-    const [file, setFile] = useState<File | null>(null);
     const [saving, setSaving] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -43,7 +76,7 @@ const PaperModal: React.FC<{
         }
         setSaving(true);
         try {
-            await onSave(form, file);
+            await onSave(form);
             onClose();
         } catch (err: any) {
             alert(`Lưu thất bại: ${err.message || err}`);
@@ -106,31 +139,6 @@ const PaperModal: React.FC<{
                             </select>
                         </div>
                     </div>
-                    <div>
-                        <label className={labelStyles}>File toàn văn (PDF, tùy chọn)</label>
-                        {paper?.fullTextFileName && (
-                            <div className="flex items-center gap-3 my-2 p-2 bg-slate-900/50 rounded-md">
-                                <i className="fas fa-file-pdf text-red-400"></i>
-                                <span className="text-sm text-slate-200 flex-1 truncate">{paper.fullTextFileName}</span>
-                                {onDeleteFile && (
-                                    <button
-                                        type="button"
-                                        onClick={async () => {
-                                            if (!window.confirm('Xóa file toàn văn?')) return;
-                                            await onDeleteFile();
-                                        }}
-                                        className="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-red-900/30 rounded"
-                                    >Xóa file</button>
-                                )}
-                            </div>
-                        )}
-                        <input
-                            type="file"
-                            accept="application/pdf"
-                            onChange={e => setFile(e.target.files?.[0] || null)}
-                            className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50"
-                        />
-                    </div>
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={onClose} disabled={saving} className="px-4 py-2 rounded-md text-slate-200 bg-slate-600 hover:bg-slate-500 disabled:opacity-50">Hủy</button>
@@ -145,24 +153,17 @@ const PaperModal: React.FC<{
 
 type AnnouncementFormData = Omit<Announcement, 'id'>;
 
-const readFileAsDataURL = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-
 const AnnouncementModal: React.FC<{
     announcement: Announcement | null;
     onClose: () => void;
     onSave: (data: AnnouncementFormData) => Promise<void>;
 }> = ({ announcement, onClose, onSave }) => {
+    const initialContentImages = announcement?.contentImages || [];
     const [form, setForm] = useState<AnnouncementFormData>({
         title: announcement?.title || '',
         date: announcement?.date || '',
         content: announcement?.content || '',
-        contentImages: announcement?.contentImages || [],
+        contentImages: initialContentImages,
         externalLink: announcement?.externalLink || '',
     });
     const [saving, setSaving] = useState(false);
@@ -172,15 +173,12 @@ const AnnouncementModal: React.FC<{
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleContentImagesAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-        const dataUrls = await Promise.all(Array.from(files).map(readFileAsDataURL));
-        setForm(prev => ({ ...prev, contentImages: [...(prev.contentImages || []), ...dataUrls] }));
-        e.target.value = '';
-    };
-
     const handleRemoveContentImage = (idx: number) => {
+        const url = (form.contentImages || [])[idx];
+        // Nếu là ảnh mới upload (không có trong initial) → xóa blob luôn
+        if (api.isBlobUrl(url) && !initialContentImages.includes(url)) {
+            api.deleteImage(url);
+        }
         setForm(prev => ({
             ...prev,
             contentImages: (prev.contentImages || []).filter((_, i) => i !== idx),
@@ -195,6 +193,13 @@ const AnnouncementModal: React.FC<{
         setSaving(true);
         try {
             await onSave(form);
+            // Cleanup: ảnh cũ trong initial nhưng đã bị remove khỏi form
+            const kept = new Set(form.contentImages || []);
+            for (const oldUrl of initialContentImages) {
+                if (!kept.has(oldUrl) && api.isBlobUrl(oldUrl)) {
+                    api.deleteImage(oldUrl);
+                }
+            }
             onClose();
         } catch (err: any) {
             alert(`Lưu thất bại: ${err.message || err}`);
@@ -239,7 +244,10 @@ const AnnouncementModal: React.FC<{
                                 ))}
                             </div>
                         )}
-                        <input type="file" accept="image/*" multiple onChange={handleContentImagesAdd} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50" />
+                        <BlobImagePicker
+                            multiple
+                            onUploaded={urls => setForm(prev => ({ ...prev, contentImages: [...(prev.contentImages || []), ...urls] }))}
+                        />
                     </div>
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
@@ -294,15 +302,26 @@ const ManagementCard: React.FC<{
 const ImageUploadCard: React.FC<{
     title: string;
     currentImage: string;
-    onImageSelect: (file: File) => void;
+    onImageSelect: (url: string) => void;
 }> = ({ title, currentImage, onImageSelect }) => {
-    const inputId = `upload-${title.replace(/\s+/g, '-')}`;
-    
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            onImageSelect(e.target.files[0]);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        try {
+            const { url } = await api.uploadImage(file);
+            onImageSelect(url);
+        } catch (err: any) {
+            alert(`Upload ảnh thất bại: ${err.message || err}`);
+        } finally {
+            setUploading(false);
+            e.target.value = '';
         }
     };
+
+    const inputId = `upload-${title.replace(/\s+/g, '-')}`;
 
     return (
         <div className="bg-slate-800/50 p-4 rounded-lg shadow-md border border-slate-700/50 flex flex-col">
@@ -310,10 +329,10 @@ const ImageUploadCard: React.FC<{
             <div className="w-full h-32 mb-4">
               <img src={currentImage} alt={title} className="w-full h-full rounded-md bg-slate-900/50 p-1 object-contain" />
             </div>
-            <label htmlFor={inputId} className="cursor-pointer w-full text-center block bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-auto">
-                Change Image
+            <label htmlFor={inputId} className={`cursor-pointer w-full text-center block bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-auto ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                {uploading ? 'Đang tải...' : 'Change Image'}
             </label>
-            <input id={inputId} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <input id={inputId} type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleFileChange} />
         </div>
     );
 };
@@ -323,43 +342,43 @@ const EditModal: React.FC<{
     item: KeynoteSpeaker | Sponsor | NavLink | null;
     itemType: 'speaker' | 'sponsor' | 'navLink';
     onClose: () => void;
-    onSave: (itemData: any) => void;
+    onSave: (itemData: any) => Promise<void>;
 }> = ({ item, itemType, onClose, onSave }) => {
     const [formData, setFormData] = useState<any>({});
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [initialImage, setInitialImage] = useState<string>('');
 
     useEffect(() => {
         setFormData(item || {});
-        setImagePreview(item ? (item as any).imageUrl || (item as any).logoUrl : null);
+        const initial = item ? ((item as any).imageUrl || (item as any).logoUrl || '') : '';
+        setInitialImage(initial);
     }, [item]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setImageFile(file);
-            setImagePreview(URL.createObjectURL(file));
+    const imageField = itemType === 'speaker' ? 'imageUrl' : 'logoUrl';
+    const currentImage = formData[imageField] || '';
+
+    const handleImageUploaded = (urls: string[]) => {
+        const newUrl = urls[0];
+        const oldUrl = currentImage;
+        if (api.isBlobUrl(oldUrl) && oldUrl !== initialImage) {
+            // ảnh đang trong form (do user vừa pick) và chưa save → xóa luôn để khỏi orphan
+            api.deleteImage(oldUrl);
         }
+        setFormData({ ...formData, [imageField]: newUrl });
     };
 
-    const handleSubmit = () => {
-        if (imageFile && itemType !== 'navLink') {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                if (itemType === 'speaker') {
-                    onSave({ ...formData, imageUrl: base64String });
-                } else {
-                    onSave({ ...formData, logoUrl: base64String });
-                }
-            };
-            reader.readAsDataURL(imageFile);
-        } else {
-            onSave(formData);
+    const handleSubmit = async () => {
+        const newUrl = formData[imageField] || '';
+        try {
+            await onSave(formData);
+            if (api.isBlobUrl(initialImage) && initialImage !== newUrl) {
+                api.deleteImage(initialImage);
+            }
+        } catch (err: any) {
+            alert(`Lưu thất bại: ${err.message || err}`);
         }
     };
     
@@ -392,8 +411,8 @@ const EditModal: React.FC<{
                     {(itemType === 'speaker' || itemType === 'sponsor') && (
                         <div>
                             <label className={labelStyles}>Image/Logo</label>
-                            {imagePreview && <img src={imagePreview} alt="Preview" className="w-full h-40 object-contain rounded-md my-2 bg-slate-900" />}
-                            <input type="file" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50"/>
+                            {currentImage && <img src={currentImage} alt="Preview" className="w-full h-40 object-contain rounded-md my-2 bg-slate-900" />}
+                            <BlobImagePicker onUploaded={handleImageUploaded} />
                         </div>
                     )}
                 </div>
@@ -409,7 +428,7 @@ const EditModal: React.FC<{
 
 const AdminPage: React.FC = () => {
     const { siteContent, updateImage, updateConferenceInfo, addNavLink, updateNavLink, deleteNavLink, addKeynoteSpeaker, updateKeynoteSpeaker, deleteKeynoteSpeaker, addSponsorOrCoOrganizer, updateSponsorOrCoOrganizer, deleteSponsorOrCoOrganizer } = useSiteContent();
-    const { papers, addPaper, updatePaperDetails, deletePaper, uploadFullTextFile, deleteFullTextFile } = usePapers();
+    const { papers, addPaper, updatePaperDetails, deletePaper } = usePapers();
     const [paperModal, setPaperModal] = useState<{ isOpen: boolean; paper: DetailedPaperSubmission | null }>({ isOpen: false, paper: null });
     const { registrations } = useRegistrations();
     const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useAnnouncements();
@@ -438,12 +457,12 @@ const AdminPage: React.FC = () => {
         alert('Conference info updated!');
     }
     
-    const handleImageUpload = (imageKey: keyof Omit<SiteContent, 'keynoteSpeakers' | 'conferenceTopics' | 'sponsors' | 'coOrganizers' | 'navLinks' | 'heroTitle' | 'heroSubtitle' | 'conferenceDate' | 'conferenceLocation'>, file: File) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            updateImage(imageKey, reader.result as string);
-        };
-        reader.readAsDataURL(file);
+    const handleImageUpload = async (imageKey: keyof Omit<SiteContent, 'keynoteSpeakers' | 'conferenceTopics' | 'sponsors' | 'coOrganizers' | 'navLinks' | 'heroTitle' | 'heroSubtitle' | 'conferenceDate' | 'conferenceLocation'>, url: string) => {
+        const oldUrl = (siteContent as any)[imageKey] as string | undefined;
+        await updateImage(imageKey, url);
+        if (api.isBlobUrl(oldUrl) && oldUrl !== url) {
+            api.deleteImage(oldUrl);
+        }
     };
 
     const handleOpenModal = (item: KeynoteSpeaker | Sponsor | NavLink | null, itemType: 'speaker' | 'sponsor' | 'navLink', subType?: 'sponsor' | 'coOrganizer') => {
@@ -454,28 +473,22 @@ const AdminPage: React.FC = () => {
         setModalState({ isOpen: false, item: null, itemType: 'sponsor' });
     };
 
-    const handleSave = (itemData: any) => {
+    const handleSave = async (itemData: any) => {
         if (modalState.itemType === 'speaker') {
-            itemData.id ? updateKeynoteSpeaker(itemData.id, itemData) : addKeynoteSpeaker(itemData);
+            await (itemData.id ? updateKeynoteSpeaker(itemData.id, itemData) : addKeynoteSpeaker(itemData));
         } else if (modalState.itemType === 'navLink') {
-            itemData.id ? updateNavLink(itemData.id, itemData) : addNavLink(itemData);
+            await (itemData.id ? updateNavLink(itemData.id, itemData) : addNavLink(itemData));
         } else {
-            itemData.id ? updateSponsorOrCoOrganizer(itemData.id, itemData, modalState.subType!) : addSponsorOrCoOrganizer(itemData, modalState.subType!);
+            await (itemData.id ? updateSponsorOrCoOrganizer(itemData.id, itemData, modalState.subType!) : addSponsorOrCoOrganizer(itemData, modalState.subType!));
         }
         handleCloseModal();
     };
     
-    const handleSavePaper = async (data: AddPaperInput, file: File | null) => {
-        let targetId: number;
+    const handleSavePaper = async (data: AddPaperInput) => {
         if (paperModal.paper) {
             await updatePaperDetails(paperModal.paper.id, data);
-            targetId = paperModal.paper.id;
         } else {
-            const created = await addPaper(data);
-            targetId = created.id;
-        }
-        if (file) {
-            await uploadFullTextFile(targetId, file);
+            await addPaper(data);
         }
     };
 
@@ -505,12 +518,23 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    const handleDelete = (id: number, type: 'speaker' | 'sponsor' | 'coOrganizer' | 'navLink') => {
+    const handleDelete = async (id: number, type: 'speaker' | 'sponsor' | 'coOrganizer' | 'navLink') => {
         if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
-        if(type === 'speaker') deleteKeynoteSpeaker(id);
-        else if (type === 'navLink') deleteNavLink(id);
-        else deleteSponsorOrCoOrganizer(id, type);
-    }
+        let blobUrl: string | undefined;
+        if (type === 'speaker') {
+            blobUrl = siteContent.keynoteSpeakers.find(s => s.id === id)?.imageUrl;
+            await deleteKeynoteSpeaker(id);
+        } else if (type === 'navLink') {
+            await deleteNavLink(id);
+        } else {
+            const list = type === 'sponsor' ? siteContent.sponsors : siteContent.coOrganizers;
+            blobUrl = list.find(item => item.id === id)?.logoUrl;
+            await deleteSponsorOrCoOrganizer(id, type);
+        }
+        if (api.isBlobUrl(blobUrl)) {
+            api.deleteImage(blobUrl);
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto pt-28 px-4 pb-16">
@@ -707,7 +731,6 @@ const AdminPage: React.FC = () => {
                                     <th className="p-3">Toàn văn</th>
                                     <th className="p-3">Kỷ yếu</th>
                                     <th className="p-3">Trình bày</th>
-                                    <th className="p-3">File</th>
                                     <th className="p-3 text-right">Thao tác</th>
                                 </tr>
                             </thead>
@@ -725,15 +748,6 @@ const AdminPage: React.FC = () => {
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.fullTextStatus)}`}>{p.fullTextStatus}</span></td>
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.reviewStatus)}`}>{p.reviewStatus}</span></td>
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.presentationStatus)}`}>{p.presentationStatus}</span></td>
-                                        <td className="p-3">
-                                            {p.fullTextUrl ? (
-                                                <a href={p.fullTextUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300" title={p.fullTextFileName}>
-                                                    <i className="fas fa-file-pdf"></i>
-                                                </a>
-                                            ) : (
-                                                <span className="text-slate-600">—</span>
-                                            )}
-                                        </td>
                                         <td className="p-3 text-right whitespace-nowrap">
                                             <button onClick={() => setPaperModal({ isOpen: true, paper: p })} className="text-xs font-medium text-blue-100 hover:text-blue-300 py-1 px-3 rounded bg-blue-900/50 hover:bg-blue-800/50 mr-2">Sửa</button>
                                             <button onClick={() => handleDeletePaper(p.id)} className="text-xs font-medium text-red-400 hover:text-red-300 py-1 px-3 rounded bg-red-900/50 hover:bg-red-800/50">Xóa</button>
@@ -769,10 +783,6 @@ const AdminPage: React.FC = () => {
                     paper={paperModal.paper}
                     onClose={() => setPaperModal({ isOpen: false, paper: null })}
                     onSave={handleSavePaper}
-                    onDeleteFile={paperModal.paper ? async () => {
-                        await deleteFullTextFile(paperModal.paper!.id);
-                        setPaperModal(prev => prev.paper ? { ...prev, paper: { ...prev.paper, fullTextFileName: undefined, fullTextUrl: undefined } } : prev);
-                    } : undefined}
                 />
             )}
             {announcementModal.isOpen && (

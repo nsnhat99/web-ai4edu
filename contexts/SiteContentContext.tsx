@@ -44,87 +44,87 @@ export const SiteContentProvider: React.FC<{ children: ReactNode }> = ({ childre
       setSiteContent(updatedContent);
   }
 
-  const updateImage = async (key: keyof Omit<SiteContent, 'keynoteSpeakers' | 'conferenceTopics' | 'sponsors' | 'coOrganizers' | 'navLinks' | 'heroTitle' | 'heroSubtitle' | 'conferenceDate' | 'conferenceLocation'>, newUrl: string) => {
-    updateContent({ [key]: newUrl });
+  const updateImage = (key: keyof Omit<SiteContent, 'keynoteSpeakers' | 'conferenceTopics' | 'sponsors' | 'coOrganizers' | 'navLinks' | 'heroTitle' | 'heroSubtitle' | 'conferenceDate' | 'conferenceLocation'>, newUrl: string) => {
+    return updateContent({ [key]: newUrl });
   };
-  
-  const updateConferenceInfo = async (data: { title: string; subtitle: string; date: string; location: string }) => {
-    updateContent({ 
-        heroTitle: data.title, 
+
+  const updateConferenceInfo = (data: { title: string; subtitle: string; date: string; location: string }) => {
+    return updateContent({
+        heroTitle: data.title,
         heroSubtitle: data.subtitle,
         conferenceDate: data.date,
         conferenceLocation: data.location,
     });
   };
 
-  const addNavLink = async (navLinkData: Omit<NavLink, 'id'>) => {
-    if (!siteContent) return;
+  const addNavLink = (navLinkData: Omit<NavLink, 'id'>) => {
+    if (!siteContent) return Promise.resolve();
     const newLink: NavLink = { id: Date.now(), ...navLinkData };
-    updateContent({ navLinks: [...siteContent.navLinks, newLink] });
+    return updateContent({ navLinks: [...siteContent.navLinks, newLink] });
   };
 
-  const updateNavLink = async (navLinkId: number, navLinkData: Partial<NavLink>) => {
-    if (!siteContent) return;
-    updateContent({
+  const updateNavLink = (navLinkId: number, navLinkData: Partial<NavLink>) => {
+    if (!siteContent) return Promise.resolve();
+    return updateContent({
       navLinks: siteContent.navLinks.map(link => link.id === navLinkId ? { ...link, ...navLinkData } : link),
     });
   };
 
-  const deleteNavLink = async (navLinkId: number) => {
-    if (!siteContent) return;
-    updateContent({
+  const deleteNavLink = (navLinkId: number) => {
+    if (!siteContent) return Promise.resolve();
+    return updateContent({
       navLinks: siteContent.navLinks.filter(link => link.id !== navLinkId),
     });
   };
 
-  const addKeynoteSpeaker = async (speakerData: Omit<KeynoteSpeaker, 'id'>) => {
-    if (!siteContent) return;
+  const addKeynoteSpeaker = (speakerData: Omit<KeynoteSpeaker, 'id'>) => {
+    if (!siteContent) return Promise.resolve();
     const newSpeaker: KeynoteSpeaker = { id: Date.now(), ...speakerData };
-    updateContent({ keynoteSpeakers: [...siteContent.keynoteSpeakers, newSpeaker]});
+    return updateContent({ keynoteSpeakers: [...siteContent.keynoteSpeakers, newSpeaker]});
   };
-  
-  const updateKeynoteSpeaker = async (speakerId: number, speakerData: Partial<KeynoteSpeaker>) => {
-    if (!siteContent) return;
-    updateContent({
+
+  const updateKeynoteSpeaker = (speakerId: number, speakerData: Partial<KeynoteSpeaker>) => {
+    if (!siteContent) return Promise.resolve();
+    return updateContent({
       keynoteSpeakers: siteContent.keynoteSpeakers.map(s => s.id === speakerId ? { ...s, ...speakerData } : s),
     });
   };
-  
-  const deleteKeynoteSpeaker = async (speakerId: number) => {
-    if (!siteContent) return;
-    updateContent({
+
+  const deleteKeynoteSpeaker = (speakerId: number) => {
+    if (!siteContent) return Promise.resolve();
+    return updateContent({
       keynoteSpeakers: siteContent.keynoteSpeakers.filter(s => s.id !== speakerId),
     });
   };
 
-  const updateConferenceTopic = async (topicId: number, data: { title: string; imageUrl: string; description: string }) => {
-    if (!siteContent) return;
-    updateContent({
+  const updateConferenceTopic = (topicId: number, data: { title: string; imageUrl: string; description: string }) => {
+    if (!siteContent) return Promise.resolve();
+    return updateContent({
       conferenceTopics: siteContent.conferenceTopics.map(topic =>
         topic.id === topicId ? { ...topic, ...data } : topic
       ),
     });
   };
 
-  const addSponsorOrCoOrganizer = async (data: Omit<Sponsor, 'id'>, type: 'sponsor' | 'coOrganizer') => {
-    if (!siteContent) return;
+  const addSponsorOrCoOrganizer = (data: Omit<Sponsor, 'id'>, type: 'sponsor' | 'coOrganizer') => {
+    if (!siteContent) return Promise.resolve();
     const newItem: Sponsor = { id: Date.now(), ...data };
     const key = type === 'sponsor' ? 'sponsors' : 'coOrganizers';
-    updateContent({ [key]: [...siteContent[key], newItem] });
+    return updateContent({ [key]: [...siteContent[key], newItem] });
   };
 
-  const updateSponsorOrCoOrganizer = async (id: number, data: Partial<Sponsor>, type: 'sponsor' | 'coOrganizer') => {
-    if (!siteContent) return;
+  const updateSponsorOrCoOrganizer = (id: number, data: Partial<Sponsor>, type: 'sponsor' | 'coOrganizer') => {
+    if (!siteContent) return Promise.resolve();
     const key = type === 'sponsor' ? 'sponsors' : 'coOrganizers';
-    updateContent({
+    return updateContent({
       [key]: siteContent[key].map(item => item.id === id ? { ...item, ...data } : item),
     });
   };
 
-  const deleteSponsorOrCoOrganizer = async (id: number, type: 'sponsor' | 'coOrganizer') => {
-    if (!siteContent) return;
+  const deleteSponsorOrCoOrganizer = (id: number, type: 'sponsor' | 'coOrganizer') => {
+    if (!siteContent) return Promise.resolve();
     const key = type === 'sponsor' ? 'sponsors' : 'coOrganizers';
-    updateContent({
+    return updateContent({
       [key]: siteContent[key].filter(item => item.id !== id),
     });
   };

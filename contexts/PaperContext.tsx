@@ -13,8 +13,6 @@ interface PaperContextType {
   updateFullTextStatus: (id: number, status: ReviewStatus) => Promise<void>;
   updateReviewStatus: (id: number, status: ReviewStatus) => Promise<void>;
   updatePresentationStatus: (id: number, status: PresentationStatus) => Promise<void>;
-  uploadFullTextFile: (paperId: number, file: File) => Promise<void>;
-  deleteFullTextFile: (paperId: number) => Promise<void>;
 }
 
 const PaperContext = createContext<PaperContextType | undefined>(undefined);
@@ -52,21 +50,10 @@ export const PaperProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateReviewStatus = (id: number, status: ReviewStatus) => updateStatus(id, 'reviewStatus', status);
   const updatePresentationStatus = (id: number, status: PresentationStatus) => updateStatus(id, 'presentationStatus', status);
 
-  const uploadFullTextFile = async (paperId: number, file: File) => {
-    const response = await api.uploadFullTextFile(paperId, file);
-    setPapers(prevPapers => prevPapers.map(p => (p.id === paperId ? response.paper : p)));
-  };
-
-  const deleteFullTextFile = async (paperId: number) => {
-    const response = await api.deleteFullTextFile(paperId);
-    setPapers(prevPapers => prevPapers.map(p => (p.id === paperId ? response.paper : p)));
-  };
-
   return (
     <PaperContext.Provider value={{
       papers, addPaper, deletePaper, updatePaperDetails,
       updateAbstractStatus, updateFullTextStatus, updateReviewStatus, updatePresentationStatus,
-      uploadFullTextFile, deleteFullTextFile
     }}>
       {children}
     </PaperContext.Provider>

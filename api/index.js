@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { sql } = require('@vercel/postgres');
-const { put, del, list } = require('@vercel/blob');
+const { put, del } = require('@vercel/blob');
 const { appendRow, createResumableUpload, makeFilePublic } = require('./lib/google');
 
 const app = express();
@@ -98,21 +98,60 @@ app.post('/api/public/contacts', async (req, res) => {
   }
 });
 
-// Multer config for file uploads (store in memory)
-const upload = multer({
+// Multer config for image uploads.
+// 4MB: aligned with Vercel serverless function body cap (~4.5MB).
+const imageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 4 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF and Word files are allowed!'));
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Chỉ chấp nhận file ảnh'));
+  }
+});
+
+const isVercelBlobUrl = (urlStr) => {
+  try {
+    const u = new URL(urlStr);
+    return u.hostname.endsWith('.public.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+};
+
+// --- GENERIC IMAGE UPLOAD ---
+app.post('/api/uploads/image', (req, res, next) => {
+  imageUpload.single('file')(req, res, (err) => {
+    if (err) {
+      const code = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(code).json({ message: err.message || 'Upload thất bại' });
     }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'Thiếu file' });
+  try {
+    const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const blob = await put(`images/${Date.now()}-${safeName}`, req.file.buffer, {
+      access: 'public',
+      contentType: req.file.mimetype,
+    });
+    res.json({ url: blob.url });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload thất bại', details: error.message });
+  }
+});
+
+app.delete('/api/uploads/image', async (req, res) => {
+  const url = (req.query.url || req.body?.url || '').toString();
+  if (!url) return res.status(400).json({ message: 'Thiếu url' });
+  if (!isVercelBlobUrl(url)) {
+    return res.status(400).json({ message: 'URL không thuộc Vercel Blob' });
+  }
+  try {
+    await del(url);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(200).json({ ok: false, details: error.message });
   }
 });
 
@@ -231,6 +270,17 @@ app.put('/api/announcements/:id', async (req, res) => {
 app.delete('/api/announcements/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
+    const { rows: existing } = await sql`SELECT "imageUrl", "contentImages" FROM announcements WHERE id = ${id};`;
+    if (existing.length > 0) {
+      const urls = [];
+      if (existing[0].imageUrl) urls.push(existing[0].imageUrl);
+      if (Array.isArray(existing[0].contentImages)) urls.push(...existing[0].contentImages);
+      for (const url of urls) {
+        if (typeof url === 'string' && /^https?:\/\//.test(url) && !url.startsWith('data:')) {
+          try { await del(url); } catch (err) { console.error('Error deleting announcement blob:', err); }
+        }
+      }
+    }
     const result = await sql`DELETE FROM announcements WHERE id = ${id};`;
     if (result.rowCount > 0) {
       res.status(200).json({ id: id });
@@ -328,14 +378,6 @@ app.put('/api/papers/:id', async (req, res) => {
 app.delete('/api/papers/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const { rows } = await sql`SELECT "fullTextUrl" FROM papers WHERE id = ${id};`;
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Paper not found" });
-    }
-    const paper = rows[0];
-    if (paper.fullTextUrl) {
-      try { await del(paper.fullTextUrl); } catch (err) { console.error('Error deleting fulltext file:', err); }
-    }
     const result = await sql`DELETE FROM papers WHERE id = ${id};`;
     if (result.rowCount > 0) {
       res.status(200).json({ id: id });
@@ -344,80 +386,6 @@ app.delete('/api/papers/:id', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete paper', details: error.message });
-  }
-});
-
-// --- FILE UPLOAD ENDPOINTS ---
-app.post('/api/papers/:id/upload-fulltext', upload.single('file'), async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-  try {
-    const { rows: paperRows } = await sql`SELECT id, "fullTextUrl" FROM papers WHERE id = ${id};`;
-    if (paperRows.length === 0) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
-    if (paperRows[0].fullTextUrl) {
-      try { await del(paperRows[0].fullTextUrl); } catch (err) { console.error('Error deleting old fulltext:', err); }
-    }
-    const fileName = `${id}-fulltext-${Date.now()}-${req.file.originalname}`;
-    const blob = await put(`papers/${fileName}`, req.file.buffer, {
-      access: 'public',
-      contentType: req.file.mimetype,
-    });
-    const { rows } = await sql`
-      UPDATE papers
-      SET 
-        "fullTextUrl" = ${blob.url},
-        "fullTextFileName" = ${req.file.originalname},
-        "fullTextStatus" = 'Duyệt'
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-    res.json({ message: 'Full text uploaded successfully', paper: rows[0], fileUrl: blob.url });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ message: 'Failed to upload full text', details: error.message });
-  }
-});
-
-app.delete('/api/papers/:id/delete-fulltext', async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  try {
-    const { rows: paperRows } = await sql`SELECT "fullTextUrl" FROM papers WHERE id = ${id};`;
-    if (paperRows.length === 0) {
-      return res.status(404).json({ message: 'Paper not found' });
-    }
-    if (paperRows[0].fullTextUrl) {
-      await del(paperRows[0].fullTextUrl);
-    }
-    const { rows } = await sql`
-      UPDATE papers
-      SET "fullTextUrl" = NULL, "fullTextFileName" = NULL, "fullTextStatus" = 'Đang chờ duyệt'
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-    res.json({ message: 'Full text deleted successfully', paper: rows[0] });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to delete full text', details: error.message });
-  }
-});
-
-app.get('/api/papers/files/list', async (req, res) => {
-  try {
-    const { blobs } = await list({ prefix: 'papers/' });
-    res.json({
-      count: blobs.length,
-      files: blobs.map(blob => ({
-        url: blob.url,
-        pathname: blob.pathname,
-        size: blob.size,
-        uploadedAt: blob.uploadedAt
-      }))
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to list files', details: error.message });
   }
 });
 
