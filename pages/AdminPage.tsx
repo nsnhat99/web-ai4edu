@@ -162,7 +162,6 @@ const AnnouncementModal: React.FC<{
         title: announcement?.title || '',
         date: announcement?.date || '',
         content: announcement?.content || '',
-        imageUrl: announcement?.imageUrl || '',
         contentImages: announcement?.contentImages || [],
         externalLink: announcement?.externalLink || '',
     });
@@ -171,13 +170,6 @@ const AnnouncementModal: React.FC<{
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const dataUrl = await readFileAsDataURL(file);
-        setForm(prev => ({ ...prev, imageUrl: dataUrl }));
     };
 
     const handleContentImagesAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,10 +185,6 @@ const AnnouncementModal: React.FC<{
             ...prev,
             contentImages: (prev.contentImages || []).filter((_, i) => i !== idx),
         }));
-    };
-
-    const handleRemoveCover = () => {
-        setForm(prev => ({ ...prev, imageUrl: '' }));
     };
 
     const handleSubmit = async () => {
@@ -238,16 +226,6 @@ const AnnouncementModal: React.FC<{
                     <div>
                         <label className={labelStyles}>Link "Xem thêm tại" (tùy chọn)</label>
                         <input type="url" name="externalLink" value={form.externalLink || ''} onChange={handleChange} className={inputStyles} placeholder="https://..." />
-                    </div>
-                    <div>
-                        <label className={labelStyles}>Ảnh bìa (tùy chọn)</label>
-                        {form.imageUrl && (
-                            <div className="relative my-2 inline-block">
-                                <img src={form.imageUrl} alt="Ảnh bìa" className="max-h-40 rounded-md bg-slate-900 p-1" />
-                                <button type="button" onClick={handleRemoveCover} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">×</button>
-                            </div>
-                        )}
-                        <input type="file" accept="image/*" onChange={handleCoverImageChange} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50" />
                     </div>
                     <div>
                         <label className={labelStyles}>Ảnh nội dung (tùy chọn, có thể chọn nhiều)</label>

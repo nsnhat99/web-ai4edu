@@ -9,7 +9,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // --- PUBLIC SUBMISSION ENDPOINTS (Google Sheets + Drive) ---
 // File upload bypasses this server: FE gets a resumable session URL and PUTs directly to Drive.

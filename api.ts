@@ -13,8 +13,20 @@ const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-    throw new Error(errorData.message || 'API request failed');
+    const raw = await response.text().catch(() => '');
+    let parsed: any = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch { /* not JSON */ }
+
+    let msg: string;
+    if (parsed && (parsed.message || parsed.details)) {
+      msg = [parsed.message, parsed.details].filter(Boolean).join(' — ');
+    } else if (response.status === 413) {
+      msg = 'Dữ liệu gửi lên quá lớn (413). Vui lòng giảm kích thước ảnh hoặc số lượng ảnh đính kèm.';
+    } else {
+      const excerpt = raw ? ` — ${raw.slice(0, 200)}` : '';
+      msg = `HTTP ${response.status} ${response.statusText}${excerpt}`;
+    }
+    throw new Error(msg);
   }
 
   if (response.status === 204 || response.status === 200 && response.headers.get('content-length') === '0') {

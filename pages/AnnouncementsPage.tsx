@@ -41,15 +41,7 @@ const AnnouncementsPage: React.FC = () => {
                     )}
                   </div>
 
-                  {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="w-full max-h-80 object-cover rounded-xl my-4 border border-blue-500/10"
-                    />
-                  )}
-
-                  <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">
+                  <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line mt-2">
                     {item.content}
                   </p>
 
