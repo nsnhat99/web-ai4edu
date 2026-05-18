@@ -65,8 +65,12 @@ async function seed(client) {
         date TEXT,
         content TEXT,
         "imageUrl" TEXT,
-        "contentImages" JSONB
+        "contentImages" JSONB,
+        "externalLink" TEXT
       );
+    `;
+    await client.sql`
+      ALTER TABLE announcements ADD COLUMN IF NOT EXISTS "externalLink" TEXT;
     `;
     console.log('Checked/Created "announcements" table.');
 

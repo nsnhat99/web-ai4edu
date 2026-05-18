@@ -4,8 +4,8 @@ import * as api from '../api';
 
 interface AnnouncementContextType {
   announcements: Announcement[];
-  addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'date'>) => Promise<void>;
-  updateAnnouncement: (announcementId: number, announcementData: Partial<Omit<Announcement, 'id' | 'date'>>) => Promise<void>;
+  addAnnouncement: (announcementData: Omit<Announcement, 'id'>) => Promise<void>;
+  updateAnnouncement: (announcementId: number, announcementData: Partial<Omit<Announcement, 'id'>>) => Promise<void>;
   deleteAnnouncement: (announcementId: number) => Promise<void>;
 }
 
@@ -20,12 +20,12 @@ export const AnnouncementProvider: React.FC<{ children: ReactNode }> = ({ childr
       .catch(err => console.error("Failed to fetch announcements:", err));
   }, []);
 
-  const addAnnouncement = async (announcementData: Omit<Announcement, 'id' | 'date'>) => {
+  const addAnnouncement = async (announcementData: Omit<Announcement, 'id'>) => {
     const newAnnouncement = await api.addAnnouncement(announcementData);
     setAnnouncements(prev => [newAnnouncement, ...prev]);
   };
 
-  const updateAnnouncement = async (announcementId: number, announcementData: Partial<Omit<Announcement, 'id' | 'date'>>) => {
+  const updateAnnouncement = async (announcementId: number, announcementData: Partial<Omit<Announcement, 'id'>>) => {
     const updatedAnnouncement = await api.updateAnnouncement(announcementId, announcementData);
     setAnnouncements(prev => prev.map(a => a.id === announcementId ? updatedAnnouncement : a));
   };

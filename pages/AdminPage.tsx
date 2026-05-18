@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 // FIX: Import SiteContent from types.ts where it is now centrally defined.
-import type { KeynoteSpeaker, Sponsor, NavLink, SiteContent, DetailedPaperSubmission, ReviewStatus, PresentationStatus } from '../types';
+import type { KeynoteSpeaker, Sponsor, NavLink, SiteContent, DetailedPaperSubmission, ReviewStatus, PresentationStatus, Announcement } from '../types';
 import { useSiteContent } from '../contexts/SiteContentContext';
 import { usePapers } from '../contexts/PaperContext';
 import type { AddPaperInput } from '../contexts/PaperContext';
 import { useRegistrations } from '../contexts/RegistrationContext';
+import { useAnnouncements } from '../contexts/AnnouncementContext';
 import { CONFERENCE_TOPICS } from '../constants';
 
 const REVIEW_STATUSES: ReviewStatus[] = ['Duyệt', 'Không duyệt', 'Đang chờ duyệt'];
@@ -129,6 +130,138 @@ const PaperModal: React.FC<{
                             onChange={e => setFile(e.target.files?.[0] || null)}
                             className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50"
                         />
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end gap-4">
+                    <button onClick={onClose} disabled={saving} className="px-4 py-2 rounded-md text-slate-200 bg-slate-600 hover:bg-slate-500 disabled:opacity-50">Hủy</button>
+                    <button onClick={handleSubmit} disabled={saving} className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+                        {saving ? 'Đang lưu...' : 'Lưu'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+type AnnouncementFormData = Omit<Announcement, 'id'>;
+
+const readFileAsDataURL = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+const AnnouncementModal: React.FC<{
+    announcement: Announcement | null;
+    onClose: () => void;
+    onSave: (data: AnnouncementFormData) => Promise<void>;
+}> = ({ announcement, onClose, onSave }) => {
+    const [form, setForm] = useState<AnnouncementFormData>({
+        title: announcement?.title || '',
+        date: announcement?.date || '',
+        content: announcement?.content || '',
+        imageUrl: announcement?.imageUrl || '',
+        contentImages: announcement?.contentImages || [],
+        externalLink: announcement?.externalLink || '',
+    });
+    const [saving, setSaving] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const dataUrl = await readFileAsDataURL(file);
+        setForm(prev => ({ ...prev, imageUrl: dataUrl }));
+    };
+
+    const handleContentImagesAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const dataUrls = await Promise.all(Array.from(files).map(readFileAsDataURL));
+        setForm(prev => ({ ...prev, contentImages: [...(prev.contentImages || []), ...dataUrls] }));
+        e.target.value = '';
+    };
+
+    const handleRemoveContentImage = (idx: number) => {
+        setForm(prev => ({
+            ...prev,
+            contentImages: (prev.contentImages || []).filter((_, i) => i !== idx),
+        }));
+    };
+
+    const handleRemoveCover = () => {
+        setForm(prev => ({ ...prev, imageUrl: '' }));
+    };
+
+    const handleSubmit = async () => {
+        if (!form.title.trim() || !form.content.trim()) {
+            alert('Vui lòng nhập tiêu đề và nội dung.');
+            return;
+        }
+        setSaving(true);
+        try {
+            await onSave(form);
+            onClose();
+        } catch (err: any) {
+            alert(`Lưu thất bại: ${err.message || err}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const inputStyles = "mt-1 block w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 text-slate-100";
+    const labelStyles = "block text-sm font-medium text-slate-100";
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" onMouseDown={onClose}>
+            <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl p-6 border border-slate-700" onMouseDown={e => e.stopPropagation()}>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-4">{announcement ? 'Sửa thông báo' : 'Thêm thông báo'}</h2>
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <div>
+                        <label className={labelStyles}>Tiêu đề *</label>
+                        <input type="text" name="title" value={form.title} onChange={handleChange} className={inputStyles} />
+                    </div>
+                    <div>
+                        <label className={labelStyles}>Ngày (vd: 20/06/2026 hoặc "Sắp cập nhật")</label>
+                        <input type="text" name="date" value={form.date} onChange={handleChange} className={inputStyles} placeholder="Để trống nếu muốn dùng ngày hiện tại" />
+                    </div>
+                    <div>
+                        <label className={labelStyles}>Nội dung *</label>
+                        <textarea name="content" value={form.content} onChange={handleChange} className={inputStyles} rows={5} />
+                    </div>
+                    <div>
+                        <label className={labelStyles}>Link "Xem thêm tại" (tùy chọn)</label>
+                        <input type="url" name="externalLink" value={form.externalLink || ''} onChange={handleChange} className={inputStyles} placeholder="https://..." />
+                    </div>
+                    <div>
+                        <label className={labelStyles}>Ảnh bìa (tùy chọn)</label>
+                        {form.imageUrl && (
+                            <div className="relative my-2 inline-block">
+                                <img src={form.imageUrl} alt="Ảnh bìa" className="max-h-40 rounded-md bg-slate-900 p-1" />
+                                <button type="button" onClick={handleRemoveCover} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">×</button>
+                            </div>
+                        )}
+                        <input type="file" accept="image/*" onChange={handleCoverImageChange} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50" />
+                    </div>
+                    <div>
+                        <label className={labelStyles}>Ảnh nội dung (tùy chọn, có thể chọn nhiều)</label>
+                        {(form.contentImages && form.contentImages.length > 0) && (
+                            <div className="grid grid-cols-3 gap-2 my-2">
+                                {form.contentImages.map((src, idx) => (
+                                    <div key={idx} className="relative">
+                                        <img src={src} alt={`Ảnh ${idx + 1}`} className="w-full h-24 object-cover rounded-md bg-slate-900" />
+                                        <button type="button" onClick={() => handleRemoveContentImage(idx)} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">×</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <input type="file" accept="image/*" multiple onChange={handleContentImagesAdd} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50" />
                     </div>
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
@@ -301,6 +434,8 @@ const AdminPage: React.FC = () => {
     const { papers, addPaper, updatePaperDetails, deletePaper, uploadFullTextFile, deleteFullTextFile } = usePapers();
     const [paperModal, setPaperModal] = useState<{ isOpen: boolean; paper: DetailedPaperSubmission | null }>({ isOpen: false, paper: null });
     const { registrations } = useRegistrations();
+    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useAnnouncements();
+    const [announcementModal, setAnnouncementModal] = useState<{ isOpen: boolean; item: Announcement | null }>({ isOpen: false, item: null });
 
     const [modalState, setModalState] = useState<{
         isOpen: boolean;
@@ -370,6 +505,23 @@ const AdminPage: React.FC = () => {
         if (!window.confirm('Xóa bài báo này?')) return;
         try {
             await deletePaper(id);
+        } catch (err: any) {
+            alert(`Xóa thất bại: ${err.message || err}`);
+        }
+    };
+
+    const handleSaveAnnouncement = async (data: AnnouncementFormData) => {
+        if (announcementModal.item) {
+            await updateAnnouncement(announcementModal.item.id, data);
+        } else {
+            await addAnnouncement(data);
+        }
+    };
+
+    const handleDeleteAnnouncement = async (id: number) => {
+        if (!window.confirm('Xóa thông báo này?')) return;
+        try {
+            await deleteAnnouncement(id);
         } catch (err: any) {
             alert(`Xóa thất bại: ${err.message || err}`);
         }
@@ -446,6 +598,44 @@ const AdminPage: React.FC = () => {
                                 </li>
                             ))}
                         </ul>
+                    </div>
+                </div>
+
+                {/* Thông báo Hội thảo */}
+                <div>
+                    <div className="flex justify-between items-center mb-8">
+                         <h3 className="text-xl sm:text-2xl font-semibold text-blue-100">Thông báo Hội thảo</h3>
+                         <button onClick={() => setAnnouncementModal({ isOpen: true, item: null })} className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">Thêm thông báo</button>
+                    </div>
+                    <div className="bg-slate-800/50 p-4 rounded-lg shadow-md border border-slate-700/50">
+                        {announcements.length === 0 ? (
+                            <p className="text-center text-slate-400 py-6">Chưa có thông báo nào. Nhấn "Thêm thông báo" để bắt đầu.</p>
+                        ) : (
+                            <ul className="space-y-3">
+                                {announcements.map(a => (
+                                    <li key={a.id} className="p-3 bg-slate-900/50 rounded-md">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-3 flex-wrap">
+                                                    <h4 className="font-semibold text-slate-100 truncate" title={a.title}>{a.title}</h4>
+                                                    <span className="text-xs text-slate-400">{a.date}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-300 mt-2 line-clamp-2">{a.content}</p>
+                                                {a.externalLink && (
+                                                    <p className="text-xs text-blue-300 mt-1 truncate" title={a.externalLink}>
+                                                        <i className="fas fa-link mr-1"></i>{a.externalLink}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <button onClick={() => setAnnouncementModal({ isOpen: true, item: a })} className="text-sm font-medium text-blue-100 hover:text-blue-300 py-1 px-3 rounded bg-blue-900/50 hover:bg-blue-800/50">Sửa</button>
+                                                <button onClick={() => handleDeleteAnnouncement(a.id)} className="text-sm font-medium text-red-400 hover:text-red-300 py-1 px-3 rounded bg-red-900/50 hover:bg-red-800/50">Xóa</button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
 
@@ -605,6 +795,13 @@ const AdminPage: React.FC = () => {
                         await deleteFullTextFile(paperModal.paper!.id);
                         setPaperModal(prev => prev.paper ? { ...prev, paper: { ...prev.paper, fullTextFileName: undefined, fullTextUrl: undefined } } : prev);
                     } : undefined}
+                />
+            )}
+            {announcementModal.isOpen && (
+                <AnnouncementModal
+                    announcement={announcementModal.item}
+                    onClose={() => setAnnouncementModal({ isOpen: false, item: null })}
+                    onSave={handleSaveAnnouncement}
                 />
             )}
         </div>

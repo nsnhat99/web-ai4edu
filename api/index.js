@@ -186,12 +186,14 @@ app.get('/api/announcements', async (req, res) => {
 });
 
 app.post('/api/announcements', async (req, res) => {
-  const { title, content, imageUrl, contentImages } = req.body;
-  const date = new Intl.DateTimeFormat('en-GB').format(new Date());
+  const { title, content, imageUrl, contentImages, externalLink, date: dateInput } = req.body;
+  const date = dateInput && String(dateInput).trim() !== ''
+    ? dateInput
+    : new Intl.DateTimeFormat('en-GB').format(new Date());
   try {
     const { rows } = await sql`
-      INSERT INTO announcements (title, content, "imageUrl", date, "contentImages")
-      VALUES (${title}, ${content}, ${imageUrl}, ${date}, ${JSON.stringify(contentImages || [])}::jsonb)
+      INSERT INTO announcements (title, content, "imageUrl", date, "contentImages", "externalLink")
+      VALUES (${title}, ${content}, ${imageUrl}, ${date}, ${JSON.stringify(contentImages || [])}::jsonb, ${externalLink || null})
       RETURNING *;
     `;
     res.status(201).json(rows[0]);
@@ -202,15 +204,17 @@ app.post('/api/announcements', async (req, res) => {
 
 app.put('/api/announcements/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { title, content, imageUrl, contentImages } = req.body;
+  const { title, content, imageUrl, contentImages, externalLink, date } = req.body;
   try {
     const { rows } = await sql`
       UPDATE announcements
-      SET 
+      SET
         title = COALESCE(${title}, title),
         content = COALESCE(${content}, content),
+        date = COALESCE(${date}, date),
         "imageUrl" = COALESCE(${imageUrl}, "imageUrl"),
-        "contentImages" = COALESCE(${contentImages ? JSON.stringify(contentImages) : null}::jsonb, "contentImages")
+        "contentImages" = COALESCE(${contentImages ? JSON.stringify(contentImages) : null}::jsonb, "contentImages"),
+        "externalLink" = COALESCE(${externalLink}, "externalLink")
       WHERE id = ${id}
       RETURNING *;
     `;

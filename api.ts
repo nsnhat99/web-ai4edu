@@ -74,7 +74,7 @@ export const getAnnouncements = (): Promise<Announcement[]> => {
   return fetchAPI('/announcements');
 };
 
-export const addAnnouncement = (data: Omit<Announcement, 'id' | 'date'>) => {
+export const addAnnouncement = (data: Omit<Announcement, 'id'>) => {
   return fetchAPI('/announcements', {
     method: 'POST',
     body: JSON.stringify(data),

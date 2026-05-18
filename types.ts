@@ -104,6 +104,7 @@ export type Announcement = {
   content: string;
   imageUrl?: string;
   contentImages?: string[];
+  externalLink?: string;
 };
 
 export type User = {

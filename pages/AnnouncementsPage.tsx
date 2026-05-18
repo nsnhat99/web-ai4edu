@@ -1,22 +1,8 @@
 import React from 'react';
+import { useAnnouncements } from '../contexts/AnnouncementContext';
 
 const AnnouncementsPage: React.FC = () => {
-  const announcements = [
-    {
-      id: 1,
-      title: "Thông báo số 1",
-      date: "Sắp cập nhật",
-      content: "Thông tin chi tiết về Hội thảo Quốc gia AI4EDU 2026 sẽ được cập nhật trong thời gian tới.",
-      status: "upcoming",
-    },
-    {
-      id: 2,
-      title: "Thông báo số 2",
-      date: "Sắp cập nhật",
-      content: "Thông tin bổ sung và hướng dẫn tham gia Hội thảo sẽ được công bố sau.",
-      status: "upcoming",
-    },
-  ];
+  const { announcements } = useAnnouncements();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
@@ -29,31 +15,77 @@ const AnnouncementsPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="space-y-6">
-        {announcements.map((item) => (
-          <div
-            key={item.id}
-            className="bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl p-6 sm:p-8 hover:border-blue-400/20 transition-all"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-                <i className="fas fa-bullhorn text-blue-300"></i>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <h3 className="text-lg font-bold text-blue-50">{item.title}</h3>
-                  <span className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[11px] font-semibold uppercase tracking-wider">
-                    {item.date}
-                  </span>
+      {announcements.length === 0 ? (
+        <div className="text-center py-16">
+          <i className="fas fa-bullhorn text-5xl text-blue-400/40 mb-4"></i>
+          <p className="text-slate-400 text-base">Chưa có thông báo nào. Vui lòng quay lại sau.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {announcements.map((item) => (
+            <div
+              key={item.id}
+              className="bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl p-6 sm:p-8 hover:border-blue-400/20 transition-all"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+                  <i className="fas fa-bullhorn text-blue-300"></i>
                 </div>
-                <p className="text-slate-400 text-[15px] leading-relaxed">
-                  {item.content}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <h3 className="text-lg font-bold text-blue-50">{item.title}</h3>
+                    {item.date && (
+                      <span className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[11px] font-semibold uppercase tracking-wider">
+                        {item.date}
+                      </span>
+                    )}
+                  </div>
+
+                  {item.imageUrl && (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full max-h-80 object-cover rounded-xl my-4 border border-blue-500/10"
+                    />
+                  )}
+
+                  <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">
+                    {item.content}
+                  </p>
+
+                  {item.contentImages && item.contentImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                      {item.contentImages.map((src, idx) => (
+                        <a key={idx} href={src} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={src}
+                            alt={`${item.title} - ảnh ${idx + 1}`}
+                            className="w-full h-32 sm:h-36 object-cover rounded-lg border border-blue-500/10 hover:border-blue-400/30 transition-colors"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.externalLink && (
+                    <p className="mt-4 text-sm text-slate-300">
+                      <span className="text-slate-400">Xem thêm tại: </span>
+                      <a
+                        href={item.externalLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-300 hover:text-blue-200 underline break-all"
+                      >
+                        {item.externalLink}
+                      </a>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Info notice */}
       <div className="mt-12 text-center">
