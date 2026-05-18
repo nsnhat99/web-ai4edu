@@ -26,13 +26,16 @@ const Footer: React.FC = () => {
 
             {/* Co-organizer / sponsor */}
             <div className="mt-6 space-y-2">
-              <p className="text-blue-400/60 text-xs uppercase tracking-wider font-semibold">Đồng tổ chức</p>
-              <p className="text-slate-400 text-sm">Tạp chí Giáo dục</p>
+              <p className="text-blue-400/60 text-xs uppercase tracking-wider font-semibold">Phối hợp tổ chức</p>
+              <p className="text-slate-400 text-sm">FISU Việt Nam</p>
+              <p className="text-slate-400 text-sm">Đại học Công nghệ - Đại học Quốc gia Hà Nội</p>
+              <p className="text-slate-400 text-sm">Hội Tin học Việt Nam</p>
+              <p className="text-slate-400 text-sm">Viện Khoa học Giáo dục Việt Nam</p>
             </div>
             <div className="mt-4 space-y-2">
-              <p className="text-blue-400/60 text-xs uppercase tracking-wider font-semibold">Tài trợ</p>
-              <p className="text-slate-400 text-sm">Báo Kinh tế - Đô thị</p>
-              <p className="text-slate-400 text-sm">Nhà xuất bản Hà Nội</p>
+              <p className="text-blue-400/60 text-xs uppercase tracking-wider font-semibold">Bài trợ và chỉ đạo</p>
+              <p className="text-slate-400 text-sm">Sở Khoa học và Công nghệ Hà Nội</p>
+              <p className="text-slate-400 text-sm">Sở Giáo dục & Đào tạo Hà Nội</p>
             </div>
           </div>
 
