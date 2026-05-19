@@ -157,7 +157,15 @@ const ContactPage: React.FC = () => {
         </div>
         <p className="text-slate-300 text-sm mb-4">Trường Đại học Thủ đô Hà Nội</p>
         <div className="rounded-xl overflow-hidden border border-blue-500/10">
-          <iframe title="Trường Đại học Thủ đô Hà Nội" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d59594.267219172834!2d105.78595024985282!3d21.006994965395897!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab3f57fc23d1%3A0xf813dfd05dfa4078!2sHanoi%20Metropolitan%20University!5e0!3m2!1sen!2sus!4v1779157296699!5m2!1sen!2sus" width={600} height={450} style={{ border: "0" }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
+          <iframe
+            title="Trường Đại học Thủ đô Hà Nội"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d59594.267219172834!2d105.78595024985282!3d21.006994965395897!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab3f57fc23d1%3A0xf813dfd05dfa4078!2sHanoi%20Metropolitan%20University!5e0!3m2!1sen!2sus!4v1779157296699!5m2!1sen!2sus"
+            className="w-full h-[400px] block"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </div>
     </div>
