@@ -39,7 +39,12 @@ const BlobImagePicker: React.FC<{
                 onChange={handleChange}
                 className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/50 file:text-blue-300 hover:file:bg-blue-800/50 disabled:opacity-50"
             />
-            {uploading && <p className="text-xs text-blue-300 mt-1">{label || 'Đang tải lên...'}</p>}
+            {uploading && (
+                <p className="text-sm text-blue-300 mt-2 flex items-center gap-2">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    {label || 'Đang tải lên...'}
+                </p>
+            )}
         </>
     );
 };
@@ -330,7 +335,11 @@ const ImageUploadCard: React.FC<{
               <img src={currentImage} alt={title} className="w-full h-full rounded-md bg-slate-900/50 p-1 object-contain" />
             </div>
             <label htmlFor={inputId} className={`cursor-pointer w-full text-center block bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-auto ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
-                {uploading ? 'Đang tải...' : 'Change Image'}
+                {uploading ? (
+                    <><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải...</>
+                ) : (
+                    <><i className="fas fa-upload mr-2"></i>Change Image</>
+                )}
             </label>
             <input id={inputId} type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleFileChange} />
         </div>
@@ -346,6 +355,7 @@ const EditModal: React.FC<{
 }> = ({ item, itemType, onClose, onSave }) => {
     const [formData, setFormData] = useState<any>({});
     const [initialImage, setInitialImage] = useState<string>('');
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         setFormData(item || {});
@@ -372,13 +382,17 @@ const EditModal: React.FC<{
 
     const handleSubmit = async () => {
         const newUrl = formData[imageField] || '';
+        setSaving(true);
         try {
             await onSave(formData);
             if (api.isBlobUrl(initialImage) && initialImage !== newUrl) {
                 api.deleteImage(initialImage);
             }
+            onClose();
         } catch (err: any) {
             alert(`Lưu thất bại: ${err.message || err}`);
+        } finally {
+            setSaving(false);
         }
     };
     
@@ -417,8 +431,10 @@ const EditModal: React.FC<{
                     )}
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
-                    <button onClick={onClose} className="px-4 py-2 rounded-md text-slate-200 bg-slate-600 hover:bg-slate-500">Cancel</button>
-                    <button onClick={handleSubmit} className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700">Save</button>
+                    <button onClick={onClose} disabled={saving} className="px-4 py-2 rounded-md text-slate-200 bg-slate-600 hover:bg-slate-500 disabled:opacity-50">Cancel</button>
+                    <button onClick={handleSubmit} disabled={saving} className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+                        {saving ? 'Đang lưu...' : 'Save'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -481,7 +497,6 @@ const AdminPage: React.FC = () => {
         } else {
             await (itemData.id ? updateSponsorOrCoOrganizer(itemData.id, itemData, modalState.subType!) : addSponsorOrCoOrganizer(itemData, modalState.subType!));
         }
-        handleCloseModal();
     };
     
     const handleSavePaper = async (data: AddPaperInput) => {

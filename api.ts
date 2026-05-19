@@ -159,8 +159,15 @@ export const deleteImage = async (url: string): Promise<void> => {
   } catch { /* best-effort */ }
 };
 
-export const isBlobUrl = (s?: string | null): s is string =>
-  !!s && /^https?:\/\//.test(s) && !s.startsWith('data:');
+export const isBlobUrl = (s?: string | null): s is string => {
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.hostname.endsWith('.public.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+};
 
 // --- PUBLIC SUBMISSIONS (Google Sheets + Drive) ---
 
