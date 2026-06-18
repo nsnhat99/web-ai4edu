@@ -93,25 +93,6 @@ const ParticipationGuidePage: React.FC = () => {
             </SectionCard>
 
 
-            <SectionCard title="Lệ phí tham dự" icon="fa-money-check-alt">
-                <div className="space-y-3">
-                    <p><strong className="text-emerald-400 font-bold">Miễn phí</strong> đối với cán bộ, giảng viên Trường Đại học Thủ đô Hà Nội.</p>
-                    <p><strong className="text-amber-400 font-bold">1.500.000 VNĐ</strong> đối với các tác giả khác.</p>
-                    <p className="text-sm text-slate-400 italic">Cách thức nộp: Chuyển khoản trước khi nộp báo cáo toàn văn.</p>
-                </div>
-                <div className="mt-6 pt-4 border-t border-slate-600">
-                    <h3 className="font-semibold text-xl text-slate-100 mb-3">Thông tin chuyển khoản</h3>
-                    <ul className="space-y-2 text-slate-100 bg-slate-900/50 p-4 rounded-md border border-slate-700">
-                        <li><strong>Chủ tài khoản:</strong> TRUONG DAI HOC THU DO HA NOI</li>
-                        <li><strong>Số tài khoản:</strong> 115000147515</li>
-                        <li><strong>Ngân hàng:</strong> Vietinbank - CN Nam Thăng Long</li>
-                        <li><strong>Địa chỉ ngân hàng:</strong> Hà Nội, Việt Nam</li>
-                        <li><strong>Loại tiền tệ:</strong> VND / USD</li>
-                        <li><strong>Swiftcode:</strong> ICBVVNVX133</li>
-                    </ul>
-                </div>
-            </SectionCard>
-            
             <SectionCard title="Liên lạc" icon="fa-headset">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <ContactCard
