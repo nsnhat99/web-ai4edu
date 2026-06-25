@@ -742,7 +742,6 @@ const AdminPage: React.FC = () => {
                                     <th className="p-3">Tác giả</th>
                                     <th className="p-3">Tiêu đề</th>
                                     <th className="p-3">CĐ</th>
-                                    <th className="p-3">Tóm tắt</th>
                                     <th className="p-3">Toàn văn</th>
                                     <th className="p-3">Kỷ yếu</th>
                                     <th className="p-3">Trình bày</th>
@@ -759,7 +758,6 @@ const AdminPage: React.FC = () => {
                                         </td>
                                         <td className="p-3 text-slate-100 max-w-xs truncate" title={p.paperTitle}>{p.paperTitle}</td>
                                         <td className="p-3 text-slate-300">{p.topic}</td>
-                                        <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.abstractStatus)}`}>{p.abstractStatus}</span></td>
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.fullTextStatus)}`}>{p.fullTextStatus}</span></td>
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.reviewStatus)}`}>{p.reviewStatus}</span></td>
                                         <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${statusBadgeClass(p.presentationStatus)}`}>{p.presentationStatus}</span></td>

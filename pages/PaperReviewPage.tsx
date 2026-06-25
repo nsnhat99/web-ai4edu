@@ -88,7 +88,6 @@ const PaperReviewPage: React.FC = () => {
   const {
     papers,
     updatePaperDetails,
-    updateAbstractStatus,
     updateFullTextStatus,
     updateReviewStatus,
     updatePresentationStatus,
@@ -127,7 +126,6 @@ const PaperReviewPage: React.FC = () => {
                 <col className="w-48" /> {/* Đơn vị */}
                 <col className="min-w-[320px] w-auto" /> {/* Tên bài - flexible */}
                 <col className="w-24" /> {/* Chủ đề */}
-                <col className="w-[110px]" /> {/* Tóm tắt */}
                 <col className="w-[110px]" /> {/* Toàn văn */}
                 <col className="w-[110px]" /> {/* Kết quả */}
                 <col className="w-[110px]" /> {/* Trình bày */}
@@ -140,7 +138,6 @@ const PaperReviewPage: React.FC = () => {
                   <th scope="col" className="px-3 py-3">Đơn vị công tác</th>
                   <th scope="col" className="px-3 py-3">Tên bài</th>
                   <th scope="col" className="px-2 py-3 text-center">Chủ đề</th>
-                  <th scope="col" className="px-2 py-3 text-center">Tóm tắt</th>
                   <th scope="col" className="px-2 py-3 text-center">Toàn văn</th>
                   <th scope="col" className="px-2 py-3 text-center">Kết quả</th>
                   <th scope="col" className="px-2 py-3 text-center">Trình bày</th>
@@ -168,24 +165,6 @@ const PaperReviewPage: React.FC = () => {
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topicStyles[paper.topic] || 'bg-cyan-900/70 text-cyan-300 border border-cyan-700'}`}>
                         Chuyên đề {paper.topic}
                       </span>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      {currentUser?.role === 'admin' ? (
-                        <select
-                          value={paper.abstractStatus}
-                          onChange={(e) => updateAbstractStatus(paper.id, e.target.value as ReviewStatus)}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`${selectBaseClasses} ${reviewStatusStyles[paper.abstractStatus]}`}
-                        >
-                          <option className="bg-slate-800 text-white" value="Duyệt">Duyệt</option>
-                          <option className="bg-slate-800 text-white" value="Không duyệt">Không duyệt</option>
-                          <option className="bg-slate-800 text-white" value="Đang chờ duyệt">Đang chờ</option>
-                        </select>
-                      ) : (
-                        <span className={`${spanBaseClasses} ${reviewStatusStyles[paper.abstractStatus]}`}>
-                          {reviewStatusText[paper.abstractStatus]}
-                        </span>
-                      )}
                     </td>
                     <td className="px-2 py-4 text-center">
                       {currentUser?.role === 'admin' ? (
