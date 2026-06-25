@@ -351,14 +351,16 @@ app.post('/api/papers', async (req, res) => {
 
 app.put('/api/papers/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { authorName, organization, paperTitle, abstractStatus, fullTextStatus, reviewStatus, presentationStatus } = req.body;
+  const { authorName, organization, paperTitle, topic, abstractStatus, fullTextStatus, reviewStatus, presentationStatus } = req.body;
+  const topicValue = topic == null || topic === '' ? null : parseInt(topic, 10);
   try {
     const { rows } = await sql`
       UPDATE papers
-      SET 
+      SET
         "authorName" = COALESCE(${authorName}, "authorName"),
         organization = COALESCE(${organization}, organization),
         "paperTitle" = COALESCE(${paperTitle}, "paperTitle"),
+        topic = COALESCE(${topicValue}, topic),
         "abstractStatus" = COALESCE(${abstractStatus}, "abstractStatus"),
         "fullTextStatus" = COALESCE(${fullTextStatus}, "fullTextStatus"),
         "reviewStatus" = COALESCE(${reviewStatus}, "reviewStatus"),

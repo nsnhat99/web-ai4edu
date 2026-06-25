@@ -96,21 +96,21 @@ const ParticipationGuidePage: React.FC = () => {
             <SectionCard title="Liên lạc" icon="fa-headset">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <ContactCard
-                        title="Tiểu ban 1: Bản sắc văn hóa"
+                        title="Chuyên đề 1: Bản sắc văn hóa"
                         name="TS. Lê Thị Thu Hương"
                         position="Viện trưởng Viện Hà Nội học & ĐTQT"
                         phone="0912.229.483"
                         email="ltthuong3@daihocthudo.edu.vn"
                     />
                     <ContactCard
-                        title="Tiểu ban 2: Giáo dục sáng tạo"
+                        title="Chuyên đề 2: Giáo dục sáng tạo"
                         name="TS. Ngô Thị Kim Hoàn"
                         position="Phó Trưởng khoa Sư phạm"
                         phone="0963.810.966"
                         email="ntkhoan@daihocthudo.edu.vn"
                     />
                     <ContactCard
-                        title="Tiểu ban 3: Trí tuệ nhân tạo"
+                        title="Chuyên đề 3: Trí tuệ nhân tạo"
                         name="TS. Hoàng Thị Mai"
                         position="Trưởng khoa Toán & Công nghệ thông tin"
                         phone="0983.136.829"
