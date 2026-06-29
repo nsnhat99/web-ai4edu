@@ -138,7 +138,7 @@ const PaperReviewPage: React.FC = () => {
               <thead className="bg-slate-900/50 text-xs text-slate-400 uppercase tracking-wider">
                 <tr>
                   <th scope="col" className="px-3 py-3 text-center">STT</th>
-                  <th scope="col" className="px-3 py-3">Mã số bài viết</th>
+                  <th scope="col" className="px-3 py-3 text-center whitespace-nowrap">Mã số</th>
                   <th scope="col" className="px-3 py-3">Họ tên</th>
                   <th scope="col" className="px-3 py-3">Đơn vị công tác</th>
                   <th scope="col" className="px-3 py-3">Tên bài</th>
@@ -154,7 +154,9 @@ const PaperReviewPage: React.FC = () => {
                 {papers.map((paper, index) => (
                   <tr key={paper.id} className="hover:bg-slate-700/30 transition-colors duration-200">
                     <td className="px-3 py-4 text-center font-medium text-slate-400">{index + 1}</td>
-                    <td className="px-3 py-4 text-slate-300">{paper.paperCode}</td>
+                    <td className="px-3 py-4 text-center text-slate-300">
+                      {paper.paperCode || <span className="text-slate-500">—</span>}
+                    </td>
                     <td className="px-3 py-4 font-medium text-slate-100">
                       <div className="break-words whitespace-normal" title={paper.authorName}>{paper.authorName}</div>
                     </td>
