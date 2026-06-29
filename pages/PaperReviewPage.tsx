@@ -130,9 +130,9 @@ const PaperReviewPage: React.FC = () => {
                 <col className="w-40" /> {/* Họ tên */}
                 <col className="w-48" /> {/* Đơn vị */}
                 <col className="min-w-[320px] w-auto" /> {/* Tên bài - flexible */}
-                <col className="w-24" /> {/* Chủ đề */}
-                <col className="w-[110px]" /> {/* Kết quả */}
-                <col className="w-[110px]" /> {/* Trình bày */}
+                <col className="w-[120px]" /> {/* Chủ đề */}
+                <col className="w-[120px]" /> {/* Kết quả */}
+                <col className="w-[120px]" /> {/* Trình bày */}
                 {currentUser?.role === 'admin' && <col className="w-24" />} {/* Hành động */}
               </colgroup>
               <thead className="bg-slate-900/50 text-xs text-slate-400 uppercase tracking-wider">
