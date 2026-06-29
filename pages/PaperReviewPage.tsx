@@ -26,6 +26,13 @@ const topicStyles: { [key: number]: string } = {
   3: 'bg-indigo-900/70 text-blue-300 border border-indigo-700',
 };
 
+// Sắp xếp theo mã số bài viết dạng "AI4EDU<number>" tăng dần.
+// Lấy nhóm chữ số CUỐI cùng để bỏ qua số "4" trong tiền tố "AI4EDU"; bài chưa có mã xếp cuối.
+const paperCodeOrder = (code?: string): number => {
+  const nums = code?.match(/\d+/g);
+  return nums ? parseInt(nums[nums.length - 1], 10) : Number.POSITIVE_INFINITY;
+};
+
 // Edit Paper Modal Component
 const EditPaperModal: React.FC<{
   paper: DetailedPaperSubmission;
@@ -113,6 +120,8 @@ const PaperReviewPage: React.FC = () => {
   const selectBaseClasses = "w-full text-xs font-semibold rounded-md py-1.5 px-2 focus:ring-2 focus:ring-sky-500 focus:outline-none transition appearance-none text-center";
   const spanBaseClasses = "inline-block px-2.5 py-1 text-xs font-semibold leading-none rounded-full whitespace-nowrap";
 
+  const sortedPapers = [...papers].sort((a, b) => paperCodeOrder(a.paperCode) - paperCodeOrder(b.paperCode));
+
   return (
     <>
       <div className="max-w-screen-2xl mx-auto px-4 pt-28">
@@ -151,7 +160,7 @@ const PaperReviewPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700/50">
-                {papers.map((paper, index) => (
+                {sortedPapers.map((paper, index) => (
                   <tr key={paper.id} className="hover:bg-slate-700/30 transition-colors duration-200">
                     <td className="px-3 py-4 text-center font-medium text-slate-400">{index + 1}</td>
                     <td className="px-3 py-4 text-center text-slate-300">
