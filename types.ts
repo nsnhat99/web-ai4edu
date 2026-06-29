@@ -119,6 +119,7 @@ export type PresentationStatus = 'Trình bày' | 'Không trình bày';
 
 export type DetailedPaperSubmission = {
   id: number;
+  paperCode?: string;
   authorName: string;
   organization: string;
   paperTitle: string;

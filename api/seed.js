@@ -77,6 +77,7 @@ async function seed(client) {
     await client.sql`
       CREATE TABLE IF NOT EXISTS papers (
         id SERIAL PRIMARY KEY,
+        "paperCode" TEXT,
         "authorName" TEXT NOT NULL,
         organization TEXT,
         "paperTitle" TEXT NOT NULL,
@@ -92,6 +93,7 @@ async function seed(client) {
     console.log('Checked/Created "papers" table.');
 
     try {
+      await client.sql`ALTER TABLE papers ADD COLUMN IF NOT EXISTS "paperCode" TEXT;`;
       await client.sql`ALTER TABLE papers ADD COLUMN IF NOT EXISTS "fullTextUrl" TEXT;`;
       await client.sql`ALTER TABLE papers ADD COLUMN IF NOT EXISTS "fullTextFileName" TEXT;`;
       await client.sql`ALTER TABLE announcements ADD COLUMN IF NOT EXISTS "contentImages" JSONB;`;

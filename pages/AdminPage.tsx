@@ -58,6 +58,7 @@ const PaperModal: React.FC<{
     onSave: (data: AddPaperInput) => Promise<void>;
 }> = ({ paper, onClose, onSave }) => {
     const [form, setForm] = useState<AddPaperInput>({
+        paperCode: paper?.paperCode || '',
         authorName: paper?.authorName || '',
         organization: paper?.organization || '',
         paperTitle: paper?.paperTitle || '',
@@ -98,6 +99,10 @@ const PaperModal: React.FC<{
             <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl p-6 border border-slate-700" onMouseDown={e => e.stopPropagation()}>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-4">{paper ? 'Sửa bài báo' : 'Thêm bài báo'}</h2>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <div>
+                        <label className={labelStyles}>Mã số bài viết</label>
+                        <input type="text" name="paperCode" value={form.paperCode || ''} onChange={handleChange} className={inputStyles} />
+                    </div>
                     <div>
                         <label className={labelStyles}>Tên tác giả *</label>
                         <input type="text" name="authorName" value={form.authorName} onChange={handleChange} className={inputStyles} />
@@ -739,6 +744,7 @@ const AdminPage: React.FC = () => {
                             <thead>
                                 <tr className="text-left text-slate-300 border-b border-slate-700">
                                     <th className="p-3">#</th>
+                                    <th className="p-3">Mã số</th>
                                     <th className="p-3">Tác giả</th>
                                     <th className="p-3">Tiêu đề</th>
                                     <th className="p-3">CĐ</th>
@@ -752,6 +758,7 @@ const AdminPage: React.FC = () => {
                                 {papers.map(p => (
                                     <tr key={p.id} className="border-b border-slate-700/50 hover:bg-slate-900/30">
                                         <td className="p-3 text-slate-400">{p.id}</td>
+                                        <td className="p-3 text-slate-300">{p.paperCode}</td>
                                         <td className="p-3 text-slate-100">
                                             <div className="font-medium">{p.authorName}</div>
                                             <div className="text-xs text-slate-400">{p.organization}</div>

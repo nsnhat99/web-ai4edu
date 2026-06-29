@@ -33,6 +33,7 @@ const EditPaperModal: React.FC<{
   onClose: () => void;
 }> = ({ paper, onSave, onClose }) => {
   const [formData, setFormData] = useState({
+    paperCode: paper.paperCode || '',
     authorName: paper.authorName,
     organization: paper.organization,
     paperTitle: paper.paperTitle,
@@ -55,6 +56,10 @@ const EditPaperModal: React.FC<{
 
         {/* Paper Info */}
         <div className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="paperCode" className="block text-sm font-medium text-slate-100">Mã số bài viết</label>
+            <input type="text" id="paperCode" name="paperCode" value={formData.paperCode} onChange={handleChange} className={inputStyles} />
+          </div>
           <div>
             <label htmlFor="authorName" className="block text-sm font-medium text-slate-100">Tên tác giả</label>
             <input type="text" id="authorName" name="authorName" value={formData.authorName} onChange={handleChange} className={inputStyles} />
@@ -88,7 +93,6 @@ const PaperReviewPage: React.FC = () => {
   const {
     papers,
     updatePaperDetails,
-    updateFullTextStatus,
     updateReviewStatus,
     updatePresentationStatus,
     deletePaper,
@@ -122,11 +126,11 @@ const PaperReviewPage: React.FC = () => {
             <table className="w-full text-sm text-left text-slate-100 table-fixed">
               <colgroup>
                 <col className="w-12" /> {/* TT */}
+                <col className="w-28" /> {/* Mã số */}
                 <col className="w-40" /> {/* Họ tên */}
                 <col className="w-48" /> {/* Đơn vị */}
                 <col className="min-w-[320px] w-auto" /> {/* Tên bài - flexible */}
                 <col className="w-24" /> {/* Chủ đề */}
-                <col className="w-[110px]" /> {/* Toàn văn */}
                 <col className="w-[110px]" /> {/* Kết quả */}
                 <col className="w-[110px]" /> {/* Trình bày */}
                 {currentUser?.role === 'admin' && <col className="w-24" />} {/* Hành động */}
@@ -134,11 +138,11 @@ const PaperReviewPage: React.FC = () => {
               <thead className="bg-slate-900/50 text-xs text-slate-400 uppercase tracking-wider">
                 <tr>
                   <th scope="col" className="px-3 py-3 text-center">STT</th>
+                  <th scope="col" className="px-3 py-3">Mã số bài viết</th>
                   <th scope="col" className="px-3 py-3">Họ tên</th>
                   <th scope="col" className="px-3 py-3">Đơn vị công tác</th>
                   <th scope="col" className="px-3 py-3">Tên bài</th>
                   <th scope="col" className="px-2 py-3 text-center">Chủ đề</th>
-                  <th scope="col" className="px-2 py-3 text-center">Toàn văn</th>
                   <th scope="col" className="px-2 py-3 text-center">Kết quả</th>
                   <th scope="col" className="px-2 py-3 text-center">Trình bày</th>
                   {currentUser?.role === 'admin' && (
@@ -150,11 +154,12 @@ const PaperReviewPage: React.FC = () => {
                 {papers.map((paper, index) => (
                   <tr key={paper.id} className="hover:bg-slate-700/30 transition-colors duration-200">
                     <td className="px-3 py-4 text-center font-medium text-slate-400">{index + 1}</td>
+                    <td className="px-3 py-4 text-slate-300">{paper.paperCode}</td>
                     <td className="px-3 py-4 font-medium text-slate-100">
-                      <div className="truncate" title={paper.authorName}>{paper.authorName}</div>
+                      <div className="break-words whitespace-normal" title={paper.authorName}>{paper.authorName}</div>
                     </td>
                     <td className="px-3 py-4">
-                      <div className="truncate text-slate-300" title={paper.organization}>{paper.organization}</div>
+                      <div className="break-words whitespace-normal text-slate-300" title={paper.organization}>{paper.organization}</div>
                     </td>
                     <td className="px-3 py-4">
                       <div className="font-medium text-slate-100 line-clamp-3" title={paper.paperTitle}>
@@ -165,24 +170,6 @@ const PaperReviewPage: React.FC = () => {
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topicStyles[paper.topic] || 'bg-cyan-900/70 text-cyan-300 border border-cyan-700'}`}>
                         Chuyên đề {paper.topic}
                       </span>
-                    </td>
-                    <td className="px-2 py-4 text-center">
-                      {currentUser?.role === 'admin' ? (
-                        <select
-                          value={paper.fullTextStatus}
-                          onChange={(e) => updateFullTextStatus(paper.id, e.target.value as ReviewStatus)}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`${selectBaseClasses} ${reviewStatusStyles[paper.fullTextStatus]}`}
-                        >
-                          <option className="bg-slate-800 text-white" value="Duyệt">Duyệt</option>
-                          <option className="bg-slate-800 text-white" value="Không duyệt">Không duyệt</option>
-                          <option className="bg-slate-800 text-white" value="Đang chờ duyệt">Đang chờ</option>
-                        </select>
-                      ) : (
-                        <span className={`${spanBaseClasses} ${reviewStatusStyles[paper.fullTextStatus]}`}>
-                          {reviewStatusText[paper.fullTextStatus]}
-                        </span>
-                      )}
                     </td>
                     <td className="px-2 py-4 text-center">
                       {currentUser?.role === 'admin' ? (

@@ -116,6 +116,7 @@ export const getPaper = (id: number) => {
 };
 
 export const addPaper = (data: {
+  paperCode?: string;
   authorName: string;
   organization: string;
   paperTitle: string;
