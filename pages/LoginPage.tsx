@@ -30,8 +30,7 @@ const LoginPage: React.FC = () => {
       <div className="bg-slate-800/50 backdrop-blur-md rounded-lg shadow-xl w-full max-w-md p-8 border border-slate-700/50">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-slate-100">Đăng nhập Quản trị viên</h2>
         <div className="text-sm bg-blue-900/50 border border-sky-700/50 text-blue-200 p-3 rounded-md mb-6">
-            <p>Trang đăng nhập này chỉ dành cho quản trị viên.</p>
-            <p><strong>Gợi ý:</strong> tên đăng nhập: admin / mật khẩu: password</p>
+            <p>Trang này dành riêng cho Ban tổ chức. Liên hệ quản trị viên nếu bạn cần cấp tài khoản.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
