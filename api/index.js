@@ -5,17 +5,63 @@ const multer = require('multer');
 const { sql } = require('@vercel/postgres');
 const { put, del } = require('@vercel/blob');
 const { appendRow, createResumableUpload, makeFilePublic } = require('./lib/google');
+const {
+  SESSION_TTL_SECONDS,
+  verifyPassword,
+  createSessionToken,
+  verifySessionToken,
+} = require('./lib/auth');
 
 const app = express();
 
+const SESSION_COOKIE = 'ai4edu_session';
+
 // Middleware
-app.use(cors());
+// credentials: true để browser gửi cookie session. Không dùng origin '*' vì kèm
+// credentials thì spec cấm; site và API cùng origin trên Vercel nên phản chiếu origin.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
+
+// --- SESSION ---
+// Tự đọc cookie từ header thay vì thêm cookie-parser: chỉ cần đúng một cookie.
+const readSessionCookie = (req) => {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  for (const part of header.split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name === SESSION_COOKIE) return decodeURIComponent(rest.join('='));
+  }
+  return null;
+};
+
+const buildSessionCookie = (token, maxAgeSeconds) => {
+  const attributes = [
+    `${SESSION_COOKIE}=${token}`,
+    'Path=/',
+    'HttpOnly',
+    // Lax chứ không Strict: chặn được POST từ site khác (CSRF) nhưng vẫn giữ
+    // đăng nhập khi admin mở link tới trang quản trị từ email.
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSeconds}`,
+  ];
+  if (process.env.NODE_ENV === 'production') attributes.push('Secure');
+  return attributes.join('; ');
+};
+
+/** Chặn mọi thao tác ghi và dữ liệu nội bộ. Không có middleware này thì API ai cũng gọi được. */
+const requireAdmin = (req, res, next) => {
+  const session = verifySessionToken(readSessionCookie(req));
+  if (!session || session.role !== 'admin') {
+    return res.status(401).json({ message: 'Cần đăng nhập bằng tài khoản admin' });
+  }
+  req.session = session;
+  next();
+};
 
 // --- PUBLIC SUBMISSION ENDPOINTS (Google Sheets + Drive) ---
 // File upload bypasses this server: FE gets a resumable session URL and PUTs directly to Drive.
 
-app.post('/api/drive/init-upload', async (req, res) => {
+app.post('/api/drive/init-upload', requireAdmin, async (req, res) => {
   const { fileName, mimeType } = req.body || {};
   if (!fileName || !mimeType) {
     return res.status(400).json({ message: 'fileName and mimeType are required' });
@@ -29,7 +75,7 @@ app.post('/api/drive/init-upload', async (req, res) => {
   }
 });
 
-app.post('/api/public/papers', async (req, res) => {
+app.post('/api/public/papers', requireAdmin, async (req, res) => {
   const {
     authorName, organization, email, phone, paperTitle, topic,
     fileId, fileName,
@@ -53,7 +99,7 @@ app.post('/api/public/papers', async (req, res) => {
   }
 });
 
-app.post('/api/public/registrations', async (req, res) => {
+app.post('/api/public/registrations', requireAdmin, async (req, res) => {
   const {
     tab, name, organization, email, phone,
     paperTitle, topic, delegateType, activities,
@@ -120,7 +166,7 @@ const isVercelBlobUrl = (urlStr) => {
 };
 
 // --- GENERIC IMAGE UPLOAD ---
-app.post('/api/uploads/image', (req, res, next) => {
+app.post('/api/uploads/image', requireAdmin, (req, res, next) => {
   imageUpload.single('file')(req, res, (err) => {
     if (err) {
       const code = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
@@ -142,7 +188,7 @@ app.post('/api/uploads/image', (req, res, next) => {
   }
 });
 
-app.delete('/api/uploads/image', async (req, res) => {
+app.delete('/api/uploads/image', requireAdmin, async (req, res) => {
   const url = (req.query.url || req.body?.url || '').toString();
   if (!url) return res.status(400).json({ message: 'Thiếu url' });
   if (!isVercelBlobUrl(url)) {
@@ -156,7 +202,7 @@ app.delete('/api/uploads/image', async (req, res) => {
   }
 });
 
-app.get('/api/test-db', async (req, res) => {
+app.get('/api/test-db', requireAdmin, async (req, res) => {
   try {
     const { rows } = await sql`SELECT NOW();`;
     res.json({ message: 'Database connected', time: rows[0].now });
@@ -168,21 +214,49 @@ app.get('/api/test-db', async (req, res) => {
 // --- AUTH & USERS ---
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Thiếu tên đăng nhập hoặc mật khẩu' });
+  }
   try {
     const { rows } = await sql`SELECT * FROM users WHERE username = ${username};`;
     const user = rows[0];
-    if (user && user.password === password) {
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } else {
-      res.status(401).json({ message: 'Invalid username or password' });
+    // Không tách riêng "sai tên" và "sai mật khẩu" để không tiết lộ user nào tồn tại.
+    if (!user || !verifyPassword(password, user.password)) {
+      return res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
     }
+
+    const { password: _password, ...userWithoutPassword } = user;
+    res.setHeader('Set-Cookie', buildSessionCookie(createSessionToken(user), SESSION_TTL_SECONDS));
+    res.json(userWithoutPassword);
   } catch (error) {
     res.status(500).json({ message: 'Database error during login', details: error.message });
   }
 });
 
-app.get('/api/users', async (req, res) => {
+app.post('/api/logout', (req, res) => {
+  res.setHeader('Set-Cookie', buildSessionCookie('', 0));
+  res.status(204).end();
+});
+
+/** Cho FE phục hồi phiên sau khi refresh trang. 401 nghĩa là chưa đăng nhập, không phải lỗi. */
+app.get('/api/me', async (req, res) => {
+  const session = verifySessionToken(readSessionCookie(req));
+  if (!session) {
+    return res.status(401).json({ message: 'Chưa đăng nhập' });
+  }
+  try {
+    const { rows } = await sql`SELECT id, username, role, email FROM users WHERE id = ${session.sub};`;
+    if (rows.length === 0) {
+      res.setHeader('Set-Cookie', buildSessionCookie('', 0));
+      return res.status(401).json({ message: 'Tài khoản không còn tồn tại' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Database error', details: error.message });
+  }
+});
+
+app.get('/api/users', requireAdmin, async (req, res) => {
   try {
     const { rows } = await sql`SELECT id, username, role, email FROM users;`;
     res.json(rows);
@@ -192,7 +266,7 @@ app.get('/api/users', async (req, res) => {
 });
 
 // --- REGISTRATIONS ---
-app.get('/api/registrations', async (req, res) => {
+app.get('/api/registrations', requireAdmin, async (req, res) => {
   try {
     const { rows } = await sql`SELECT * FROM registrations ORDER BY id DESC;`;
     res.json(rows);
@@ -201,7 +275,7 @@ app.get('/api/registrations', async (req, res) => {
   }
 });
 
-app.post('/api/registrations', async (req, res) => {
+app.post('/api/registrations', requireAdmin, async (req, res) => {
   const { name, organization, email, phone, withPaper } = req.body;
   try {
     const { rows } = await sql`
@@ -225,7 +299,7 @@ app.get('/api/announcements', async (req, res) => {
   }
 });
 
-app.post('/api/announcements', async (req, res) => {
+app.post('/api/announcements', requireAdmin, async (req, res) => {
   const { title, content, imageUrl, contentImages, externalLink, date: dateInput } = req.body;
   const date = dateInput && String(dateInput).trim() !== ''
     ? dateInput
@@ -242,7 +316,7 @@ app.post('/api/announcements', async (req, res) => {
   }
 });
 
-app.put('/api/announcements/:id', async (req, res) => {
+app.put('/api/announcements/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { title, content, imageUrl, contentImages, externalLink, date } = req.body;
   try {
@@ -268,7 +342,7 @@ app.put('/api/announcements/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/announcements/:id', async (req, res) => {
+app.delete('/api/announcements/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
     const { rows: existing } = await sql`SELECT "imageUrl", "contentImages" FROM announcements WHERE id = ${id};`;
@@ -294,16 +368,23 @@ app.delete('/api/announcements/:id', async (req, res) => {
 });
 
 // --- PAPERS ---
+// Trang Kết quả duyệt bài là công khai nên endpoint này không cần đăng nhập. Liệt kê
+// cột tường minh thay vì SELECT *: cột "fullTextUrl" trỏ tới file trên Drive/Blob,
+// SELECT * sẽ đẩy link đó ra response cho mọi khách.
 app.get('/api/papers', async (req, res) => {
   try {
-    const { rows } = await sql`SELECT * FROM papers ORDER BY id DESC;`;
+    const { rows } = await sql`
+      SELECT id, "paperCode", "authorName", organization, "paperTitle", topic,
+             "abstractStatus", "fullTextStatus", "reviewStatus", "presentationStatus"
+      FROM papers ORDER BY id DESC;
+    `;
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch papers', details: error.message });
   }
 });
 
-app.get('/api/papers/:id', async (req, res) => {
+app.get('/api/papers/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
     const { rows } = await sql`SELECT * FROM papers WHERE id = ${id};`;
@@ -317,7 +398,7 @@ app.get('/api/papers/:id', async (req, res) => {
   }
 });
 
-app.post('/api/papers', async (req, res) => {
+app.post('/api/papers', requireAdmin, async (req, res) => {
   const {
     paperCode,
     authorName,
@@ -351,7 +432,7 @@ app.post('/api/papers', async (req, res) => {
   }
 });
 
-app.put('/api/papers/:id', async (req, res) => {
+app.put('/api/papers/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { paperCode, authorName, organization, paperTitle, topic, abstractStatus, fullTextStatus, reviewStatus, presentationStatus } = req.body;
   const topicValue = topic == null || topic === '' ? null : parseInt(topic, 10);
@@ -381,7 +462,7 @@ app.put('/api/papers/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/papers/:id', async (req, res) => {
+app.delete('/api/papers/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
     const result = await sql`DELETE FROM papers WHERE id = ${id};`;
@@ -409,7 +490,7 @@ app.get('/api/site-content', async (req, res) => {
   }
 });
 
-app.put('/api/site-content', async (req, res) => {
+app.put('/api/site-content', requireAdmin, async (req, res) => {
   const partialContent = req.body;
   try {
     const { rows } = await sql`

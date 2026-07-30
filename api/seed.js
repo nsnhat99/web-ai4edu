@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { db } = require('@vercel/postgres');
+const { hashPassword } = require('./lib/auth');
 const {
   ANNOUNCEMENTS_DATA,
   DETAILED_PAPER_SUBMISSIONS_DATA,
@@ -23,10 +24,26 @@ const initialSiteContent = {
   conferenceLocation: "Trường Đại học Thủ đô Hà Nội",
 };
 
-const initialUsers = [
-  { id: 1, username: 'admin', password: 'password', role: 'admin', email: 'admin@daihocthudo.edu.vn' },
-  { id: 2, username: 'user', password: 'password', role: 'user', email: 'user@daihocthudo.edu.vn' },
-];
+/**
+ * Tài khoản admin lấy từ biến môi trường và lưu dạng hash. Cố ý KHÔNG có mật khẩu
+ * mặc định: seed một tài khoản mà ai đọc repo cũng biết mật khẩu thì coi như không có
+ * bảo mật. Thiếu env thì dừng seed với hướng dẫn cụ thể.
+ */
+const buildInitialAdmin = () => {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  const email = process.env.ADMIN_EMAIL || 'admin@daihocthudo.edu.vn';
+
+  if (!username || !password) {
+    throw new Error(
+      'Bảng users đang rỗng nhưng thiếu ADMIN_USERNAME / ADMIN_PASSWORD trong biến môi trường.\n' +
+      'Đặt hai biến này (mật khẩu tối thiểu 8 ký tự) rồi chạy lại. Muốn đổi mật khẩu của\n' +
+      'tài khoản đã tồn tại thì dùng: npm run set-admin-password -- <username> <password>'
+    );
+  }
+
+  return { username, password: hashPassword(password), role: 'admin', email };
+};
 
 const initialRegistrations = [];
 
@@ -113,18 +130,27 @@ async function seed(client) {
     // Only insert initial data if tables are empty
     const { rows: userCount } = await client.sql`SELECT COUNT(*) FROM users;`;
     if (parseInt(userCount[0].count) === 0) {
-      await Promise.all(
-        initialUsers.map(user =>
-          client.sql`
-            INSERT INTO users (id, username, password, role, email)
-            VALUES (${user.id}, ${user.username}, ${user.password}, ${user.role}, ${user.email})
-            ON CONFLICT (username) DO NOTHING;
-          `
-        )
-      );
-      console.log('Seeded "users" table.');
+      const admin = buildInitialAdmin();
+      await client.sql`
+        INSERT INTO users (username, password, role, email)
+        VALUES (${admin.username}, ${admin.password}, ${admin.role}, ${admin.email})
+        ON CONFLICT (username) DO NOTHING;
+      `;
+      console.log(`Seeded "users" table with admin "${admin.username}".`);
     } else {
       console.log('Users table already has data, skipping seed.');
+      // DB đã seed bằng bản cũ thì mật khẩu còn là plaintext -> verifyPassword luôn
+      // trả false -> không ai đăng nhập được. Cảnh báo để chạy set-admin-password.
+      const { rows: legacy } = await client.sql`
+        SELECT username FROM users WHERE password NOT LIKE 'scrypt$%';
+      `;
+      if (legacy.length > 0) {
+        console.warn(
+          `\n⚠️  ${legacy.length} tài khoản còn mật khẩu chưa hash: ${legacy.map(u => u.username).join(', ')}.\n` +
+          '   Các tài khoản này KHÔNG đăng nhập được. Đặt lại bằng:\n' +
+          '   npm run set-admin-password -- <username> <password-moi>\n'
+        );
+      }
     }
 
     const { rows: regCount } = await client.sql`SELECT COUNT(*) FROM registrations;`;
@@ -182,6 +208,15 @@ async function seed(client) {
     } else {
       console.log('Site content already exists, skipping seed.');
     }
+
+    // Bản seed này INSERT id tường minh vào cột SERIAL, mà Postgres không nhảy sequence
+    // khi id được chỉ định -> sequence vẫn đứng ở 1 -> bản ghi đầu tiên tạo qua UI bị
+    // lỗi trùng khóa chính. setval là idempotent, chạy vô điều kiện cho an toàn.
+    await client.sql`SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);`;
+    await client.sql`SELECT setval('registrations_id_seq', COALESCE((SELECT MAX(id) FROM registrations), 0) + 1, false);`;
+    await client.sql`SELECT setval('announcements_id_seq', COALESCE((SELECT MAX(id) FROM announcements), 0) + 1, false);`;
+    await client.sql`SELECT setval('papers_id_seq', COALESCE((SELECT MAX(id) FROM papers), 0) + 1, false);`;
+    console.log('Synced id sequences for users, registrations, announcements, papers.');
 
     console.log('\n✅ Database setup completed successfully!');
   } catch (error) {

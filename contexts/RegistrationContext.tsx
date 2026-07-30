@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { Registration } from '../types';
 import * as api from '../api';
+import { useAuth } from './AuthContext';
 
 interface RegistrationContextType {
   registrations: Registration[];
@@ -11,12 +12,20 @@ const RegistrationContext = createContext<RegistrationContextType | undefined>(u
 
 export const RegistrationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
 
+  // Endpoint này yêu cầu quyền admin (chứa email, số điện thoại người đăng ký), nên chỉ
+  // gọi khi đã đăng nhập — nếu không mọi khách vào trang đều nhận 401 vô ích.
   useEffect(() => {
+    if (!isAdmin) {
+      setRegistrations([]);
+      return;
+    }
     api.getRegistrations()
       .then(setRegistrations)
       .catch(err => console.error("Failed to fetch registrations:", err));
-  }, []);
+  }, [isAdmin]);
 
   const addRegistration = async (formData: Omit<Registration, 'id'>) => {
     const newRegistration = await api.addRegistration(formData);
