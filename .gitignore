@@ -3,3 +3,8 @@ dist
 .env
 .env.local
 *.log
+
+# Ghi chú và cấu hình cá nhân, không commit
+CLAUDE.local.md
+TASK.md
+/.claude/
