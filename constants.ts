@@ -133,4 +133,5 @@ export const ABSTRACT_FORM_URL = "https://forms.gle/i5JrctyzCG4srPzY8";
 export const FULL_PAPER_FORM_URL = "https://forms.gle/UkrYGG8uNuuYAiwe7";
 export const ATTEND_FORM_URL = "https://forms.gle/3m8wYg13vDXJiC928";
 export const SUBMISSION_FORM_URL = ABSTRACT_FORM_URL;
+export const CONFERENCE_DOCS_URL = "https://drive.google.com/drive/folders/1bfQYHWv3dPTyznoGrolHplSO-C8xbOft?usp=drive_link";
 

@@ -1,14 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { PLENARY_SESSION, SPECIALIZED_SESSIONS } from '../constants';
+import { CONFERENCE_DOCS_URL, SPECIALIZED_SESSIONS } from '../constants';
 import type { ReportItem } from '../types';
 
-const TABS = [
-  { id: 0, label: 'Phiên toàn thể', icon: 'fa-microphone-alt', color: 'blue' },
+// Tab có "href" là link ngoài, không đổi nội dung hiển thị của trang.
+type ScheduleTab = {
+  id: number;
+  label: string;
+  icon: string;
+  color: string;
+  href?: string;
+};
+
+const TABS: ScheduleTab[] = [
+  {
+    id: 0,
+    label: 'Tài liệu hội thảo',
+    icon: 'fa-folder-open',
+    color: 'blue',
+    href: CONFERENCE_DOCS_URL,
+  },
   { id: 1, label: 'Chuyên đề 1', icon: 'fa-chalkboard-teacher', color: 'emerald' },
   { id: 2, label: 'Chuyên đề 2', icon: 'fa-brain', color: 'violet' },
   { id: 3, label: 'Chuyên đề 3', icon: 'fa-cogs', color: 'amber' },
 ];
+
+const TAB_BASE_CLASSES = 'flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300';
+const TAB_ACTIVE_CLASSES = 'bg-blue-500/20 border border-blue-400/40 text-blue-200 shadow-lg shadow-blue-600/10';
+const TAB_INACTIVE_CLASSES = 'bg-[#0c1e3a]/40 border border-blue-500/10 text-slate-400 hover:text-blue-300 hover:bg-blue-500/10';
+
+// Chuyên đề đầu tiên là nội dung mặc định của trang (tab id 0 nay là link ngoài).
+const DEFAULT_SESSION = 1;
+
+// Query param ngoài 1..3 (thiếu, rỗng, chữ, ?session=0 của bản cũ) đều về chuyên đề mặc định,
+// để cùng một URL luôn cho ra cùng một nội dung dù vào thẳng hay điều hướng trong app.
+const resolveSession = (search: string): number => {
+  const session = parseInt(new URLSearchParams(search).get('session') || '');
+  return session >= DEFAULT_SESSION && session <= 3 ? session : DEFAULT_SESSION;
+};
 
 const ReportTable: React.FC<{ reports: ReportItem[] }> = ({ reports }) => {
   return (
@@ -46,17 +75,11 @@ const ReportTable: React.FC<{ reports: ReportItem[] }> = ({ reports }) => {
 
 const SchedulePage: React.FC = () => {
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const initialSession = parseInt(params.get('session') || '0');
-  const [activeTab, setActiveTab] = useState(initialSession > 0 && initialSession <= 3 ? initialSession : 0);
+  const [activeTab, setActiveTab] = useState(() => resolveSession(location.search));
 
   // Update tab when URL changes
   useEffect(() => {
-    const newParams = new URLSearchParams(location.search);
-    const session = parseInt(newParams.get('session') || '0');
-    if (session >= 0 && session <= 3) {
-      setActiveTab(session);
-    }
+    setActiveTab(resolveSession(location.search));
   }, [location.search]);
 
   return (
@@ -73,54 +96,40 @@ const SchedulePage: React.FC = () => {
 
       {/* Tab Buttons */}
       <div className="flex gap-2 sm:gap-3 mb-10 flex-wrap justify-center">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
-              activeTab === tab.id
-                ? 'bg-blue-500/20 border border-blue-400/40 text-blue-200 shadow-lg shadow-blue-600/10'
-                : 'bg-[#0c1e3a]/40 border border-blue-500/10 text-slate-400 hover:text-blue-300 hover:bg-blue-500/10'
-            }`}
-          >
-            <i className={`fas ${tab.icon} text-xs`}></i>
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.id === 0 ? 'Toàn thể' : `CĐ${tab.id}`}</span>
-          </button>
-        ))}
+        {TABS.map((tab) => {
+          const content = (
+            <>
+              <i className={`fas ${tab.icon} text-xs`}></i>
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.href ? 'Tài liệu' : `CĐ${tab.id}`}</span>
+            </>
+          );
+
+          // Link ngoài luôn dùng style "không active" vì nó không phải một tab nội dung,
+          // kèm icon external-link như các link ngoài khác trong repo để người dùng biết sẽ mở tab mới.
+          return tab.href ? (
+            <a
+              key={tab.id}
+              href={tab.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${tab.label} (mở tab mới)`}
+              className={`${TAB_BASE_CLASSES} ${TAB_INACTIVE_CLASSES}`}
+            >
+              {content}
+              <i className="fas fa-external-link-alt text-[10px] opacity-60"></i>
+            </a>
+          ) : (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`${TAB_BASE_CLASSES} ${activeTab === tab.id ? TAB_ACTIVE_CLASSES : TAB_INACTIVE_CLASSES}`}
+            >
+              {content}
+            </button>
+          );
+        })}
       </div>
-
-      {/* PLENARY SESSION */}
-      {activeTab === 0 && (
-        <div className="animate-fadeIn">
-          <div className="bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl overflow-hidden">
-            {/* Session header */}
-            <div className="bg-gradient-to-r from-blue-600/20 to-blue-800/10 px-6 sm:px-8 py-6 border-b border-blue-500/10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <i className="fas fa-microphone-alt text-blue-300"></i>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-blue-50">{PLENARY_SESSION.title}</h2>
-              </div>
-
-              {/* Theme badge */}
-              <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl px-5 py-4">
-                <div className="text-blue-400/60 text-[11px] font-semibold uppercase tracking-[2px] mb-1">Chủ đề phiên</div>
-                <p className="text-blue-200 text-lg font-semibold italic">{PLENARY_SESSION.theme}</p>
-              </div>
-            </div>
-
-            {/* Reports */}
-            <div className="px-4 sm:px-6 py-4">
-              <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-[2px] mb-4 px-2">
-                <i className="fas fa-list-ol mr-2 text-blue-400/40"></i>
-                Danh sách báo cáo phiên toàn thể
-              </h3>
-              <ReportTable reports={PLENARY_SESSION.reports} />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* SPECIALIZED SESSIONS */}
       {[1, 2, 3].map((sessionId) =>
@@ -131,7 +140,7 @@ const SchedulePage: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-600/20 to-blue-800/10 px-6 sm:px-8 py-6 border-b border-blue-500/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <i className={`fas ${TABS[sessionId].icon} text-blue-300`}></i>
+                    <i className={`fas ${TABS.find((t) => t.id === sessionId)?.icon} text-blue-300`}></i>
                   </div>
                   <h2 className="text-lg sm:text-2xl font-bold text-blue-50 leading-snug">
                     {SPECIALIZED_SESSIONS[sessionId - 1].title}
