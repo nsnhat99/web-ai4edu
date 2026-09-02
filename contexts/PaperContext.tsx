@@ -37,7 +37,7 @@ export const PaperProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const updatePaperDetails = async (id: number, data: Partial<DetailedPaperSubmission>) => {
     const updatedPaper = await api.updatePaper(id, data);
-    setPapers(papers.map(p => (p.id === id ? updatedPaper : p)));
+    setPapers(prevPapers => prevPapers.map(p => (p.id === id ? updatedPaper : p)));
   };
 
   const updateStatus = async (id: number, field: keyof DetailedPaperSubmission, status: ReviewStatus | PresentationStatus) => {
