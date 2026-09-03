@@ -45,25 +45,38 @@ const ReportTable: React.FC<{ reports: ReportItem[] }> = ({ reports }) => {
       <table className="w-full">
         <thead>
           <tr className="border-b border-blue-500/15">
-            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px] w-16">STT</th>
-            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px]">Chủ đề báo cáo</th>
+            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px] w-24">Thời gian</th>
+            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px]">Nội dung báo cáo</th>
+            <th className="px-4 py-3 text-left text-blue-400/70 text-[11px] font-bold uppercase tracking-[2px] w-32">Mã bài</th>
           </tr>
         </thead>
         <tbody>
-          {reports.map((r, idx) => (
+          {reports.map((r) => (
             <tr
               key={r.stt}
               className="group border-b border-blue-500/5 hover:bg-blue-500/5 transition-colors cursor-default"
             >
               <td className="px-4 py-5 align-top">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center text-blue-300 font-bold text-sm">
-                  {r.stt}
+                <div className="inline-flex px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-300 font-bold text-sm whitespace-nowrap">
+                  {r.time || r.stt}
                 </div>
               </td>
               <td className="px-4 py-5 align-top">
                 <p className="text-blue-50 text-[15px] font-medium leading-relaxed">
                   {r.topic}
                 </p>
+                {r.presenter && (
+                  <p className="mt-1 text-slate-400 text-[13px] italic leading-relaxed">
+                    {r.presenter}
+                  </p>
+                )}
+              </td>
+              <td className="px-4 py-5 align-top">
+                {r.paperCode ? (
+                  <span className="text-blue-300/80 text-xs font-semibold tracking-wide">{r.paperCode}</span>
+                ) : (
+                  <span className="text-slate-600 text-xs">—</span>
+                )}
               </td>
             </tr>
           ))}
@@ -132,29 +145,46 @@ const SchedulePage: React.FC = () => {
       </div>
 
       {/* SPECIALIZED SESSIONS */}
-      {[1, 2, 3].map((sessionId) =>
-        activeTab === sessionId ? (
-          <div key={sessionId} className="animate-fadeIn">
+      {SPECIALIZED_SESSIONS.map((session) =>
+        activeTab === session.id ? (
+          <div key={session.id} className="animate-fadeIn">
             <div className="bg-[#0c1e3a]/60 backdrop-blur-sm border border-blue-500/10 rounded-2xl overflow-hidden">
               {/* Session header */}
               <div className="bg-gradient-to-r from-blue-600/20 to-blue-800/10 px-6 sm:px-8 py-6 border-b border-blue-500/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <i className={`fas ${TABS.find((t) => t.id === sessionId)?.icon} text-blue-300`}></i>
+                    <i className={`fas ${TABS.find((t) => t.id === session.id)?.icon} text-blue-300`}></i>
                   </div>
                   <h2 className="text-lg sm:text-2xl font-bold text-blue-50 leading-snug">
-                    {SPECIALIZED_SESSIONS[sessionId - 1].title}
+                    {session.title}
                   </h2>
                 </div>
+
+                {(session.room || session.time) && (
+                  <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-blue-200/80">
+                    {session.room && (
+                      <span>
+                        <i className="fas fa-map-marker-alt mr-2 text-blue-400/60"></i>
+                        {session.room}
+                      </span>
+                    )}
+                    {session.time && (
+                      <span>
+                        <i className="fas fa-clock mr-2 text-blue-400/60"></i>
+                        {session.time}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Reports */}
               <div className="px-4 sm:px-6 py-4">
                 <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-[2px] mb-4 px-2">
                   <i className="fas fa-list-ol mr-2 text-blue-400/40"></i>
-                  Danh sách báo cáo phiên chuyên đề {sessionId}
+                  Danh sách báo cáo phiên chuyên đề {session.id}
                 </h3>
-                <ReportTable reports={SPECIALIZED_SESSIONS[sessionId - 1].reports} />
+                <ReportTable reports={session.reports} />
               </div>
             </div>
           </div>

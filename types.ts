@@ -80,14 +80,22 @@ export type ContactInfo = {
   email: string;
 };
 
+// "topic" ở đây là TÊN báo cáo, không phải chuyên đề. Các field bổ sung đều optional
+// vì lịch có những dòng không phải báo cáo (Thảo luận, Phiên bế mạc) và vài báo cáo
+// chưa có mã bài trong chương trình chính thức.
 export type ReportItem = {
   stt: number;
   topic: string;
+  time?: string;
+  presenter?: string;
+  paperCode?: string;
 };
 
 export type SpecializedSession = {
   id: number;
   title: string;
+  room?: string;
+  time?: string;
   reports: ReportItem[];
 };
 
