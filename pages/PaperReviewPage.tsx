@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ReviewStatus, DetailedPaperSubmission } from '../types';
+import type { ReviewStatus, PresentationStatus, DetailedPaperSubmission } from '../types';
 import { CONFERENCE_TOPICS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { usePapers } from '../contexts/PaperContext';
@@ -10,10 +10,9 @@ const reviewStatusStyles: { [key in ReviewStatus]: string } = {
   'Đang chờ duyệt': 'bg-blue-900/60 text-blue-300 border border-blue-700',
 };
 
-const reviewStatusText: { [key in ReviewStatus]: string } = {
-  'Duyệt': 'Duyệt',
-  'Không duyệt': 'Không duyệt',
-  'Đang chờ duyệt': 'Đang chờ',
+const presentationStatusStyles: { [key in PresentationStatus]: string } = {
+  'Trình bày': 'bg-blue-900/60 text-blue-300 border border-blue-700',
+  'Không trình bày': 'bg-slate-700/60 text-slate-100 border border-slate-600',
 };
 
 // Cột "Trạng thái" dùng chung field "reviewStatus" với AdminPage (ở đó gắn nhãn
@@ -35,11 +34,14 @@ const topicStyles: { [key: number]: string } = {
 const unassignedTopicStyle = 'bg-cyan-900/70 text-cyan-300 border border-cyan-700';
 
 // Hai cột trạng thái đọc từ cột TEXT nullable (api/seed.js không đặt NOT NULL/DEFAULT),
-// nên types.ts khai là ReviewStatus vẫn có thể nhận null từ API. Không chuẩn hoá thì badge
-// rỗng với khách, còn <select value={undefined}> sẽ tự nhảy về option đầu ("Duyệt") với admin.
-// Quy về "Đang chờ duyệt" như AdminPage.tsx:67 đang làm — chỉ đổi hiển thị, không ghi DB.
+// nên types.ts khai kiểu bắt buộc vẫn có thể nhận null từ API. Không chuẩn hoá thì badge
+// rỗng với khách, còn <select value={undefined}> sẽ tự nhảy về option đầu với admin.
+// Quy về mặc định như AdminPage.tsx:67 đang làm — chỉ đổi hiển thị, không ghi DB.
 const toReviewStatus = (value?: ReviewStatus | null): ReviewStatus =>
-  value && value in reviewStatusText ? value : 'Đang chờ duyệt';
+  value && value in proceedingsStatusText ? value : 'Đang chờ duyệt';
+
+const toPresentationStatus = (value?: PresentationStatus | null): PresentationStatus =>
+  value && value in presentationStatusStyles ? value : 'Không trình bày';
 
 // Sắp xếp theo mã số bài viết dạng "AI4EDU<number>" tăng dần.
 // Lấy nhóm chữ số CUỐI cùng để bỏ qua số "4" trong tiền tố "AI4EDU"; bài chưa có mã xếp cuối.
@@ -150,7 +152,7 @@ const PaperReviewPage: React.FC = () => {
   const {
     papers,
     updatePaperDetails,
-    updateFullTextStatus,
+    updatePresentationStatus,
     updateReviewStatus,
     deletePaper,
   } = usePapers();
@@ -198,7 +200,7 @@ const PaperReviewPage: React.FC = () => {
       <div className="max-w-screen-2xl mx-auto px-4 pt-28">
         <h1 className="text-4xl font-bold text-center mb-4 text-slate-100">Kết quả duyệt bài tham dự hội thảo</h1>
         <p className="text-center text-slate-100 text-lg mb-10">
-          Danh sách các bài báo đã nộp, phân theo chuyên đề, kèm kết quả phản biện và trạng thái đăng kỷ yếu.
+          Danh sách các bài báo đã nộp, phân theo chuyên đề, kèm hình thức trình bày và trạng thái đăng kỷ yếu.
         </p>
 
         <div className="bg-slate-800/40 backdrop-blur-sm rounded-lg shadow-2xl border border-slate-700/50 overflow-hidden">
@@ -211,7 +213,7 @@ const PaperReviewPage: React.FC = () => {
                 <col className="w-48" /> {/* Đơn vị công tác */}
                 <col className="min-w-[320px] w-auto" /> {/* Tên bài - flexible */}
                 <col className="w-[150px]" /> {/* Chủ đề đăng ký */}
-                <col className="w-[130px]" /> {/* Kết quả Phản biện */}
+                <col className="w-[140px]" /> {/* Trình bày */}
                 <col className="w-[160px]" /> {/* Trạng thái */}
                 {isAdmin && <col className="w-24" />} {/* Thao tác */}
               </colgroup>
@@ -223,7 +225,7 @@ const PaperReviewPage: React.FC = () => {
                   <th scope="col" className="px-3 py-3">Đơn vị công tác</th>
                   <th scope="col" className="px-3 py-3">Tên bài</th>
                   <th scope="col" className="px-2 py-3 text-center">Chủ đề đăng ký</th>
-                  <th scope="col" className="px-2 py-3 text-center">Kết quả Phản biện</th>
+                  <th scope="col" className="px-2 py-3 text-center">Trình bày</th>
                   <th scope="col" className="px-2 py-3 text-center">Trạng thái</th>
                   {isAdmin && (
                     <th scope="col" className="px-2 py-3 text-center">Thao tác</th>
@@ -249,7 +251,7 @@ const PaperReviewPage: React.FC = () => {
                     </tr>
                   ) : (
                     section.papers.map((paper, index) => {
-                      const reviewResult = toReviewStatus(paper.fullTextStatus);
+                      const presentation = toPresentationStatus(paper.presentationStatus);
                       const proceedingsStatus = toReviewStatus(paper.reviewStatus);
                       const paperLabel = paper.paperCode || `#${paper.id}`;
 
@@ -296,18 +298,17 @@ const PaperReviewPage: React.FC = () => {
                         <td className="px-2 py-4 text-center">
                           {isAdmin ? (
                             <select
-                              value={reviewResult}
-                              onChange={(e) => runUpdate(updateFullTextStatus(paper.id, e.target.value as ReviewStatus))}
-                              aria-label={`Kết quả phản biện của bài ${paperLabel}`}
-                              className={`${selectBaseClasses} ${reviewStatusStyles[reviewResult]}`}
+                              value={presentation}
+                              onChange={(e) => runUpdate(updatePresentationStatus(paper.id, e.target.value as PresentationStatus))}
+                              aria-label={`Hình thức trình bày của bài ${paperLabel}`}
+                              className={`${selectBaseClasses} ${presentationStatusStyles[presentation]}`}
                             >
-                              <option className="bg-slate-800 text-white" value="Duyệt">Duyệt</option>
-                              <option className="bg-slate-800 text-white" value="Không duyệt">Không duyệt</option>
-                              <option className="bg-slate-800 text-white" value="Đang chờ duyệt">Đang chờ</option>
+                              <option className="bg-slate-800 text-white" value="Trình bày">Trình bày</option>
+                              <option className="bg-slate-800 text-white" value="Không trình bày">Không trình bày</option>
                             </select>
                           ) : (
-                            <span className={`${spanBaseClasses} ${reviewStatusStyles[reviewResult]}`}>
-                              {reviewStatusText[reviewResult]}
+                            <span className={`${spanBaseClasses} ${presentationStatusStyles[presentation]}`}>
+                              {presentation}
                             </span>
                           )}
                         </td>
